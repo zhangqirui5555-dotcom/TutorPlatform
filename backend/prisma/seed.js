@@ -1,7 +1,7 @@
 require("dotenv/config")
 
 const bcrypt = require("bcrypt")
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3")
+const { PrismaPg } = require("@prisma/adapter-pg")
 const { PrismaClient } = require("@prisma/client")
 
 const databaseUrl = process.env.DATABASE_URL
@@ -10,10 +10,14 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to seed the database")
 }
 
-const adapter = new PrismaBetterSqlite3({ url: databaseUrl })
+const adapter = new PrismaPg({ connectionString: databaseUrl })
 const prisma = new PrismaClient({ adapter })
 
-const TEST_PASSWORD = "Test123456!"
+const TEST_PASSWORD = process.env.DEMO_SEED_PASSWORD
+
+if (!TEST_PASSWORD || TEST_PASSWORD.length < 12) {
+  throw new Error("DEMO_SEED_PASSWORD must contain at least 12 characters")
+}
 
 async function main() {
   const testPasswordHash = await bcrypt.hash(TEST_PASSWORD, 12)

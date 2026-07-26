@@ -246,9 +246,9 @@ Seed 默认创建以下测试账号：
 
 | 角色 | 邮箱 | 密码 |
 |---|---|---|
-| 管理员 | `admin@test.com` | `Test123456!` |
-| 家长 | `parent@test.com` | `Test123456!` |
-| 学生 | `student@test.com` | `Test123456!` |
+| 管理员 | `admin@test.com` | `DEMO_SEED_PASSWORD` 环境变量的值 |
+| 家长 | `parent@test.com` | `DEMO_SEED_PASSWORD` 环境变量的值 |
+| 学生 | `student@test.com` | `DEMO_SEED_PASSWORD` 环境变量的值 |
 
 这些账号和密码仅用于本地 Demo，不得用于生产环境。
 
@@ -283,4 +283,3 @@ npm run build
 - 根据实际部署域名收紧 CORS；
 - 使用对象存储或受控文件服务替代本地认证材料路径；
 - 增加日志、监控、限流、备份和自动化部署流程。
-

@@ -13,15 +13,32 @@ const studentProfileRoutes = require("./routes/studentProfileRoutes")
 const trialLessonRoutes = require("./routes/trialLessonRoutes")
 const userRoutes = require("./routes/userRoutes")
 const { errorHandler, notFound } = require("./middleware/errorHandler")
+const AppError = require("./utils/AppError")
 
 const app = express()
 
+const allowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 app.disable("x-powered-by")
-app.use(cors())
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+
+      return callback(new AppError(403, "CORS_ORIGIN_DENIED", "Origin is not allowed by CORS"))
+    },
+  }),
+)
 app.use(express.json({ limit: "1mb" }))
 
-app.get("/", (req, res) => {
+app.get(["/", "/health"], (req, res) => {
   res.json({
+    status: "ok",
     message: "TutorPlatform backend running",
   })
 })

@@ -3,6 +3,7 @@ import App from '../App.jsx'
 import ProtectedRoute from '../components/ProtectedRoute.jsx'
 import RoleRoute from '../components/RoleRoute.jsx'
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx'
+import AdminCertificationPage from '../pages/AdminCertificationPage.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
@@ -17,6 +18,7 @@ import ParentTrialLessonPage from '../pages/ParentTrialLessonPage.jsx'
 import RegisterPage from '../pages/RegisterPage.jsx'
 import StudentDashboardPage from '../pages/StudentDashboardPage.jsx'
 import StudentApplicationPage from '../pages/StudentApplicationPage.jsx'
+import StudentCertificationPage from '../pages/StudentCertificationPage.jsx'
 import StudentDemandDetailPage from '../pages/StudentDemandDetailPage.jsx'
 import StudentDemandPage from '../pages/StudentDemandPage.jsx'
 import StudentMessagePage from '../pages/StudentMessagePage.jsx'
@@ -138,6 +140,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'student/certification',
+        element: (
+          <RoleRoute allowedRole="STUDENT">
+            <StudentCertificationPage />
+          </RoleRoute>
+        ),
+      },
+      {
         path: 'student/applications',
         element: (
           <RoleRoute allowedRole="STUDENT">
@@ -182,6 +192,14 @@ const router = createBrowserRouter([
         element: (
           <RoleRoute allowedRole="ADMIN">
             <AdminDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'admin/certifications',
+        element: (
+          <RoleRoute allowedRole="ADMIN">
+            <AdminCertificationPage />
           </RoleRoute>
         ),
       },

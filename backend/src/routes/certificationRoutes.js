@@ -9,6 +9,12 @@ const router = express.Router()
 
 router.use(authenticate, requireRole("STUDENT"))
 router.post("/", asyncHandler(certificationController.submitCertification))
+router.post("/upload", asyncHandler(certificationController.uploadCertification))
 router.get("/me", asyncHandler(certificationController.getMyCertifications))
+router.get(
+  "/:id/material",
+  asyncHandler(certificationController.getMyCertificationMaterial),
+)
 
 module.exports = router
+

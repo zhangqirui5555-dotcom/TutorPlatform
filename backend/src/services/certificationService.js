@@ -133,6 +133,16 @@ async function findCertification(certificationId) {
   return certification
 }
 
+async function getCertificationMaterial(certificationId, studentId = null) {
+  const certification = await findCertification(certificationId)
+
+  if (studentId !== null && certification.studentId !== studentId) {
+    throw new AppError(403, "FORBIDDEN", "You cannot access this certification material")
+  }
+
+  return certification
+}
+
 async function reviewCertification(certificationId, adminId, decision, rejectionReason = null) {
   const certification = await findCertification(certificationId)
 
@@ -191,6 +201,8 @@ module.exports = {
   approveCertification,
   getMyCertifications,
   getPendingCertifications,
+  getCertificationMaterial,
   rejectCertification,
   submitCertification,
 }
+

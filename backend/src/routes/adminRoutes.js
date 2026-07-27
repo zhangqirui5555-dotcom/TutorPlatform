@@ -12,6 +12,10 @@ router.get(
   "/certifications",
   asyncHandler(certificationController.getPendingCertifications),
 )
+router.get(
+  "/certifications/:id/material",
+  asyncHandler(certificationController.getCertificationMaterialForAdmin),
+)
 router.post(
   "/certifications/:id/approve",
   asyncHandler(certificationController.approveCertification),
@@ -22,3 +26,4 @@ router.post(
 )
 
 module.exports = router
+

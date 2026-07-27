@@ -133,6 +133,11 @@ function StudentProfilePage() {
         <Link to="/student/dashboard">返回控制台</Link>
       </header>
 
+      <div className="notice notice-success">
+        完成简历后，还需要提交学生认证才能投递。
+        <Link to="/student/certification"> 前往学生认证 →</Link>
+      </div>
+
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {success && <div className="notice notice-success" role="status">{success}</div>}
 

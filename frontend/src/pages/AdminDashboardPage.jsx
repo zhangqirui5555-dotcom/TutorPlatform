@@ -5,6 +5,7 @@ const MODULES = [
     icon: '◇',
     title: '认证审核',
     description: '审核大学生提交的证明材料。',
+    to: '/admin/certifications',
   },
   {
     icon: '◉',
@@ -30,3 +31,4 @@ function AdminDashboardPage() {
 }
 
 export default AdminDashboardPage
+

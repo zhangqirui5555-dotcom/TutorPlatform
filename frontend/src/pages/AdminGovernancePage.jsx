@@ -68,6 +68,11 @@ function AdminGovernancePage() {
 
       {isLoading ? (
         <LoadingState label="正在加载平台数据…" />
+      ) : !overview ? (
+        <EmptyState
+          title="平台数据暂时不可用"
+          description="后端服务可能仍在部署，请稍后点击上方重试。"
+        />
       ) : (
         <>
           <div className="metric-grid">

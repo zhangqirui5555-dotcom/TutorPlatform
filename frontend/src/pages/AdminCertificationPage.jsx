@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   approveCertification,
-  getMaterialUrl,
   getPendingCertifications,
+  openCertificationMaterial,
   rejectCertification,
 } from '../api/certification.js'
 
@@ -85,9 +85,13 @@ function AdminCertificationPage() {
                 </div>
                 <span className="status-tag status-pending">待审核</span>
               </header>
-              <a href={getMaterialUrl(item.material_path)} rel="noreferrer" target="_blank">
+              <button
+                className="secondary-button compact-button"
+                onClick={() => openCertificationMaterial(item.id, 'admin')}
+                type="button"
+              >
                 打开认证材料
-              </a>
+              </button>
               <label>
                 <span>拒绝原因</span>
                 <input

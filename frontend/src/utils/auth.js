@@ -7,16 +7,18 @@ const ROLE_DASHBOARD_PATHS = {
 }
 
 export function saveAuth(token, user) {
-  window.localStorage.setItem(TOKEN_KEY, token)
-  window.localStorage.setItem(USER_KEY, JSON.stringify(user))
+  window.sessionStorage.setItem(TOKEN_KEY, token)
+  window.sessionStorage.setItem(USER_KEY, JSON.stringify(user))
+  window.localStorage.removeItem(TOKEN_KEY)
+  window.localStorage.removeItem(USER_KEY)
 }
 
 export function getToken() {
-  return window.localStorage.getItem(TOKEN_KEY)
+  return window.sessionStorage.getItem(TOKEN_KEY)
 }
 
 export function getUser() {
-  const storedUser = window.localStorage.getItem(USER_KEY)
+  const storedUser = window.sessionStorage.getItem(USER_KEY)
 
   if (!storedUser) {
     return null
@@ -31,6 +33,8 @@ export function getUser() {
 }
 
 export function clearAuth() {
+  window.sessionStorage.removeItem(TOKEN_KEY)
+  window.sessionStorage.removeItem(USER_KEY)
   window.localStorage.removeItem(TOKEN_KEY)
   window.localStorage.removeItem(USER_KEY)
 }

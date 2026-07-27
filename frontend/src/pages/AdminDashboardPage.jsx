@@ -11,11 +11,13 @@ const MODULES = [
     icon: '◉',
     title: '用户概览',
     description: '查看平台用户与账号状态。',
+    to: '/admin/users',
   },
   {
     icon: '△',
     title: '平台治理',
     description: '维护平台内容与撮合秩序。',
+    to: '/admin/governance',
   },
 ]
 

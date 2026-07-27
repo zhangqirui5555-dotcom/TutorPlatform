@@ -20,3 +20,8 @@ export async function closeGovernanceDemand(id) {
   return response.data.demand
 }
 
+export async function reopenGovernanceDemand(id) {
+  const response = await client.post(`/admin/demands/${id}/reopen`)
+  return response.data.demand
+}
+

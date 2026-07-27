@@ -13,6 +13,7 @@ router.get("/users", asyncHandler(adminController.getUsers))
 router.patch("/users/:id/status", asyncHandler(adminController.updateUserStatus))
 router.get("/governance", asyncHandler(adminController.getGovernanceOverview))
 router.post("/demands/:id/close", asyncHandler(adminController.closeDemand))
+router.post("/demands/:id/reopen", asyncHandler(adminController.reopenDemand))
 router.get(
   "/certifications",
   asyncHandler(certificationController.getPendingCertifications),

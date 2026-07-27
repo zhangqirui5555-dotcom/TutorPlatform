@@ -1,30 +1,34 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { closeGovernanceDemand, getGovernanceOverview } from '../api/admin.js'
+import {
+  closeGovernanceDemand,
+  getGovernanceOverview,
+  reopenGovernanceDemand,
+} from '../api/admin.js'
 import EmptyState from '../components/EmptyState.jsx'
 import ErrorAlert from '../components/ErrorAlert.jsx'
 import LoadingState from '../components/LoadingState.jsx'
 
 const STATUS_LABELS = {
-  DRAFT: '草稿',
-  RECRUITING: '招募中',
-  MATCHED: '已匹配',
-  COMPLETED: '已完成',
-  CLOSED: '已关闭',
+  DRAFT: '鑽夌',
+  RECRUITING: '鎷涘嫙涓?,
+  MATCHED: '宸插尮閰?,
+  COMPLETED: '宸插畬鎴?,
+  CLOSED: '宸插叧闂?,
 }
 
 function AdminGovernancePage() {
   const [overview, setOverview] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [closingId, setClosingId] = useState(null)
+  const [updatingId, setUpdatingId] = useState(null)
 
   const loadOverview = useCallback(async () => {
     setError('')
     try {
       setOverview(await getGovernanceOverview())
     } catch (requestError) {
-      setError(requestError.response?.data?.error?.message || '平台数据加载失败。')
+      setError(requestError.response?.data?.error?.message || '骞冲彴鏁版嵁鍔犺浇澶辫触銆?)
     } finally {
       setIsLoading(false)
     }
@@ -35,19 +39,36 @@ function AdminGovernancePage() {
   }, [loadOverview])
 
   async function closeDemand(demand) {
-    if (!window.confirm(`确认关闭需求“${demand.title}”吗？关闭后学生将无法继续投递。`)) {
+    if (!window.confirm(`纭鍏抽棴闇€姹傗€?{demand.title}鈥濆悧锛熷叧闂悗瀛︾敓灏嗘棤娉曠户缁姇閫掋€俙)) {
       return
     }
 
-    setClosingId(demand.id)
+    setUpdatingId(demand.id)
     setError('')
     try {
       await closeGovernanceDemand(demand.id)
       await loadOverview()
     } catch (requestError) {
-      setError(requestError.response?.data?.error?.message || '需求关闭失败。')
+      setError(requestError.response?.data?.error?.message || '闇€姹傚叧闂け璐ャ€?)
     } finally {
-      setClosingId(null)
+      setUpdatingId(null)
+    }
+  }
+
+  async function reopenDemand(demand) {
+    if (!window.confirm(`纭鎭㈠闇€姹傗€?{demand.title}鈥濆悧锛熸仮澶嶅悗灏嗛噸鏂板厑璁稿鐢熸祻瑙堝拰鎶曢€掋€俙)) {
+      return
+    }
+
+    setUpdatingId(demand.id)
+    setError('')
+    try {
+      await reopenGovernanceDemand(demand.id)
+      await loadOverview()
+    } catch (requestError) {
+      setError(requestError.response?.data?.error?.message || '闇€姹傛仮澶嶅け璐ャ€?)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -57,43 +78,43 @@ function AdminGovernancePage() {
     <section className="admin-workspace">
       <header className="workspace-header">
         <div>
-          <p className="eyebrow">Admin · Governance</p>
-          <h1>平台治理</h1>
-          <p>查看关键业务数据，并维护公开家教需求的正常秩序。</p>
+          <p className="eyebrow">Admin 路 Governance</p>
+          <h1>骞冲彴娌荤悊</h1>
+          <p>鏌ョ湅鍏抽敭涓氬姟鏁版嵁锛屽苟缁存姢鍏紑瀹舵暀闇€姹傜殑姝ｅ父绉╁簭銆?/p>
         </div>
-        <Link className="secondary-link-button" to="/admin/dashboard">返回控制台</Link>
+        <Link className="secondary-link-button" to="/admin/dashboard">杩斿洖鎺у埗鍙?/Link>
       </header>
 
       <ErrorAlert message={error} onRetry={loadOverview} />
 
       {isLoading ? (
-        <LoadingState label="正在加载平台数据…" />
+        <LoadingState label="姝ｅ湪鍔犺浇骞冲彴鏁版嵁鈥? />
       ) : !overview ? (
         <EmptyState
-          title="平台数据暂时不可用"
-          description="后端服务可能仍在部署，请稍后点击上方重试。"
+          title="骞冲彴鏁版嵁鏆傛椂涓嶅彲鐢?
+          description="鍚庣鏈嶅姟鍙兘浠嶅湪閮ㄧ讲锛岃绋嶅悗鐐瑰嚮涓婃柟閲嶈瘯銆?
         />
       ) : (
         <>
           <div className="metric-grid">
-            <article><span>平台用户</span><strong>{metrics.total_users}</strong><small>{metrics.active_users} 个正常账号</small></article>
-            <article><span>家长 / 学生</span><strong>{metrics.parents} / {metrics.students}</strong><small>{metrics.suspended_users} 个停用账号</small></article>
-            <article><span>招募中需求</span><strong>{metrics.recruiting_demands}</strong><small>{metrics.matched_demands} 个已匹配</small></article>
-            <article><span>累计投递</span><strong>{metrics.applications}</strong><small>{metrics.active_conversations} 个活跃会话</small></article>
-            <article><span>待审认证</span><strong>{metrics.pending_certifications}</strong><small>{metrics.completed_demands} 个需求已完成</small></article>
+            <article><span>骞冲彴鐢ㄦ埛</span><strong>{metrics.total_users}</strong><small>{metrics.active_users} 涓甯歌处鍙?/small></article>
+            <article><span>瀹堕暱 / 瀛︾敓</span><strong>{metrics.parents} / {metrics.students}</strong><small>{metrics.suspended_users} 涓仠鐢ㄨ处鍙?/small></article>
+            <article><span>鎷涘嫙涓渶姹?/span><strong>{metrics.recruiting_demands}</strong><small>{metrics.matched_demands} 涓凡鍖归厤</small></article>
+            <article><span>绱鎶曢€?/span><strong>{metrics.applications}</strong><small>{metrics.active_conversations} 涓椿璺冧細璇?/small></article>
+            <article><span>寰呭璁よ瘉</span><strong>{metrics.pending_certifications}</strong><small>{metrics.completed_demands} 涓渶姹傚凡瀹屾垚</small></article>
           </div>
 
           <section className="governance-section">
             <div className="section-heading">
-              <div><h2>需求内容管理</h2><p>最多显示最近 50 条需求。</p></div>
-              <button className="secondary-button compact-button" onClick={loadOverview} type="button">刷新数据</button>
+              <div><h2>闇€姹傚唴瀹圭鐞?/h2><p>鏈€澶氭樉绀烘渶杩?50 鏉￠渶姹傘€?/p></div>
+              <button className="secondary-button compact-button" onClick={loadOverview} type="button">鍒锋柊鏁版嵁</button>
             </div>
             {overview.demands.length === 0 ? (
-              <EmptyState title="暂无家教需求" description="家长发布需求后会显示在这里。" />
+              <EmptyState title="鏆傛棤瀹舵暀闇€姹? description="瀹堕暱鍙戝竷闇€姹傚悗浼氭樉绀哄湪杩欓噷銆? />
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
-                  <thead><tr><th>需求</th><th>发布者</th><th>地区</th><th>投递</th><th>状态</th><th>治理操作</th></tr></thead>
+                  <thead><tr><th>闇€姹?/th><th>鍙戝竷鑰?/th><th>鍦板尯</th><th>鎶曢€?/th><th>鐘舵€?/th><th>娌荤悊鎿嶄綔</th></tr></thead>
                   <tbody>
                     {overview.demands.map((demand) => (
                       <tr key={demand.id}>
@@ -106,13 +127,22 @@ function AdminGovernancePage() {
                           {['DRAFT', 'RECRUITING'].includes(demand.status) ? (
                             <button
                               className="secondary-button compact-button danger-button"
-                              disabled={closingId === demand.id}
+                              disabled={updatingId === demand.id}
                               onClick={() => closeDemand(demand)}
                               type="button"
                             >
-                              {closingId === demand.id ? '处理中…' : '关闭需求'}
+                              {updatingId === demand.id ? '澶勭悊涓€? : '鍏抽棴闇€姹?}
                             </button>
-                          ) : <span className="muted-text">无需处理</span>}
+                          ) : demand.status === 'CLOSED' ? (
+                            <button
+                              className="secondary-button compact-button"
+                              disabled={updatingId === demand.id}
+                              onClick={() => reopenDemand(demand)}
+                              type="button"
+                            >
+                              {updatingId === demand.id ? '澶勭悊涓€? : '鎭㈠闇€姹?}
+                            </button>
+                          ) : <span className="muted-text">鏃犻渶澶勭悊</span>}
                         </td>
                       </tr>
                     ))}

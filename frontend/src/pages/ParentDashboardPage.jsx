@@ -11,6 +11,7 @@ const MODULES = [
     icon: '✓',
     title: '投递筛选',
     description: '查看大学生投递并完成撮合。',
+    to: '/parent/applications',
   },
   {
     icon: '◷',

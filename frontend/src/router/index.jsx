@@ -4,6 +4,8 @@ import ProtectedRoute from '../components/ProtectedRoute.jsx'
 import RoleRoute from '../components/RoleRoute.jsx'
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx'
 import AdminCertificationPage from '../pages/AdminCertificationPage.jsx'
+import AdminGovernancePage from '../pages/AdminGovernancePage.jsx'
+import AdminUserPage from '../pages/AdminUserPage.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
@@ -204,6 +206,22 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'admin/users',
+        element: (
+          <RoleRoute allowedRole="ADMIN">
+            <AdminUserPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'admin/governance',
+        element: (
+          <RoleRoute allowedRole="ADMIN">
+            <AdminGovernancePage />
+          </RoleRoute>
+        ),
+      },
+      {
         path: '*',
         element: <Navigate replace to="/dashboard" />,
       },
@@ -212,3 +230,4 @@ const router = createBrowserRouter([
 ])
 
 export default router
+

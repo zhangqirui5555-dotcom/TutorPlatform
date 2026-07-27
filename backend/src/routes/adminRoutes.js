@@ -1,5 +1,6 @@
 const express = require("express")
 
+const adminController = require("../controllers/adminController")
 const certificationController = require("../controllers/certificationController")
 const authenticate = require("../middleware/auth")
 const requireRole = require("../middleware/role")
@@ -8,6 +9,10 @@ const asyncHandler = require("../utils/asyncHandler")
 const router = express.Router()
 
 router.use(authenticate, requireRole("ADMIN"))
+router.get("/users", asyncHandler(adminController.getUsers))
+router.patch("/users/:id/status", asyncHandler(adminController.updateUserStatus))
+router.get("/governance", asyncHandler(adminController.getGovernanceOverview))
+router.post("/demands/:id/close", asyncHandler(adminController.closeDemand))
 router.get(
   "/certifications",
   asyncHandler(certificationController.getPendingCertifications),

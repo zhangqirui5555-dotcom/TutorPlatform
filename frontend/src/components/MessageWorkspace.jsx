@@ -32,6 +32,7 @@ function MessageWorkspace({ eyebrow, title }) {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const loadConversationMessages = useCallback(async (conversationId) => {
     setError('')
@@ -86,6 +87,31 @@ function MessageWorkspace({ eyebrow, title }) {
     }
   }, [activeConversationId, loadConversationMessages])
 
+  useEffect(() => {
+    if (!activeConversationId) {
+      return undefined
+    }
+
+    const intervalId = window.setInterval(() => {
+      loadConversations()
+      loadConversationMessages(activeConversationId)
+    }, 3000)
+
+    return () => window.clearInterval(intervalId)
+  }, [activeConversationId, loadConversationMessages, loadConversations])
+
+  async function handleRefresh() {
+    setIsRefreshing(true)
+    try {
+      await loadConversations()
+      if (activeConversationId) {
+        await loadConversationMessages(activeConversationId)
+      }
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   async function handleSend(event) {
     event.preventDefault()
     const trimmedContent = content.trim()
@@ -98,10 +124,12 @@ function MessageWorkspace({ eyebrow, title }) {
     setIsSending(true)
 
     try {
-      const message = await sendMessage(activeConversationId, trimmedContent)
-      setMessages((current) => [...current, message])
+      await sendMessage(activeConversationId, trimmedContent)
       setContent('')
-      await loadConversations()
+      await Promise.all([
+        loadConversations(),
+        loadConversationMessages(activeConversationId),
+      ])
     } catch (requestError) {
       setError(
         requestError.response?.data?.error?.message ||
@@ -126,10 +154,11 @@ function MessageWorkspace({ eyebrow, title }) {
         </div>
         <button
           className="secondary-button compact-button"
-          onClick={loadConversations}
+          disabled={isRefreshing}
+          onClick={handleRefresh}
           type="button"
         >
-          刷新会话
+          {isRefreshing ? '正在刷新…' : '刷新会话'}
         </button>
       </header>
 

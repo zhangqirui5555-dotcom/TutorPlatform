@@ -28,7 +28,6 @@ async function main() {
       displayName: "测试管理员",
       passwordHash: testPasswordHash,
       role: "ADMIN",
-      status: "ACTIVE",
     },
     create: {
       email: "admin@test.com",
@@ -45,7 +44,6 @@ async function main() {
       displayName: "测试家长",
       passwordHash: testPasswordHash,
       role: "PARENT",
-      status: "ACTIVE",
     },
     create: {
       email: "parent@test.com",
@@ -62,7 +60,6 @@ async function main() {
       displayName: "测试大学生",
       passwordHash: testPasswordHash,
       role: "STUDENT",
-      status: "ACTIVE",
     },
     create: {
       email: "student@test.com",
@@ -152,8 +149,6 @@ async function main() {
     priceUnit: "PER_HOUR",
     currency: "CNY",
     description: "用于 TutorPlatform Demo 的测试需求",
-    status: "RECRUITING",
-    publishedAt: new Date(),
   }
 
   if (demand) {
@@ -167,6 +162,8 @@ async function main() {
         parentId: parent.id,
         title: "初中数学家教（Demo）",
         ...demandData,
+        status: "RECRUITING",
+        publishedAt: new Date(),
       },
     })
   }

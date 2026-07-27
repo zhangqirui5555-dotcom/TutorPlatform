@@ -7,6 +7,7 @@ import DashboardPage from '../pages/DashboardPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
 import ParentApplicationPage from '../pages/ParentApplicationPage.jsx'
+import ParentApplicationOverviewPage from '../pages/ParentApplicationOverviewPage.jsx'
 import ParentDashboardPage from '../pages/ParentDashboardPage.jsx'
 import ParentDemandCreatePage from '../pages/ParentDemandCreatePage.jsx'
 import ParentDemandPage from '../pages/ParentDemandPage.jsx'
@@ -77,6 +78,14 @@ const router = createBrowserRouter([
         element: (
           <RoleRoute allowedRole="PARENT">
             <ParentApplicationPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'parent/applications',
+        element: (
+          <RoleRoute allowedRole="PARENT">
+            <ParentApplicationOverviewPage />
           </RoleRoute>
         ),
       },

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  getMaterialUrl,
   getMyCertifications,
+  openCertificationMaterial,
   uploadCertification,
 } from '../api/certification.js'
 
@@ -118,9 +118,13 @@ function StudentCertificationPage() {
                     <p>{new Date(item.submitted_at).toLocaleString('zh-CN')}</p>
                     {item.rejection_reason && <p>拒绝原因：{item.rejection_reason}</p>}
                   </div>
-                  <a href={getMaterialUrl(item.material_path)} rel="noreferrer" target="_blank">
+                  <button
+                    className="secondary-button compact-button"
+                    onClick={() => openCertificationMaterial(item.id, 'student')}
+                    type="button"
+                  >
                     查看材料
-                  </a>
+                  </button>
                 </article>
               ))}
             </div>

@@ -62,6 +62,32 @@ async function getMyCertifications(req, res) {
   res.json(result)
 }
 
+async function sendCertificationMaterial(certification, res) {
+  const absolutePath = path.join(
+    __dirname,
+    "..",
+    "..",
+    certification.materialPath,
+  )
+  await fs.access(absolutePath)
+  res.sendFile(absolutePath)
+}
+
+async function getMyCertificationMaterial(req, res) {
+  const certification = await certificationService.getCertificationMaterial(
+    Number(req.params.id),
+    req.user.id,
+  )
+  await sendCertificationMaterial(certification, res)
+}
+
+async function getCertificationMaterialForAdmin(req, res) {
+  const certification = await certificationService.getCertificationMaterial(
+    Number(req.params.id),
+  )
+  await sendCertificationMaterial(certification, res)
+}
+
 async function getPendingCertifications(req, res) {
   const certifications = await certificationService.getPendingCertifications()
   res.json({ certifications })
@@ -87,8 +113,11 @@ async function rejectCertification(req, res) {
 module.exports = {
   approveCertification,
   getMyCertifications,
+  getMyCertificationMaterial,
+  getCertificationMaterialForAdmin,
   getPendingCertifications,
   rejectCertification,
   submitCertification,
   uploadCertification,
 }
+

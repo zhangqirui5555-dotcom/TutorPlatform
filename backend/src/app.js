@@ -1,6 +1,5 @@
 const express = require("express")
 const cors = require("cors")
-const path = require("node:path")
 
 const adminRoutes = require("./routes/adminRoutes")
 const applicationRoutes = require("./routes/applicationRoutes")
@@ -36,7 +35,6 @@ app.use(
   }),
 )
 app.use(express.json({ limit: "2mb" }))
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")))
 
 app.get(["/", "/health"], (req, res) => {
   res.json({
@@ -61,3 +59,4 @@ app.use(notFound)
 app.use(errorHandler)
 
 module.exports = app
+

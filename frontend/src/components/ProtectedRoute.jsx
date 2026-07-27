@@ -49,11 +49,10 @@ function ProtectedRoute({ children }) {
   }
 
   if (isChecking) {
-    return <div className="loading-state">姝ｅ湪楠岃瘉璐﹀彿鐘舵€佲€?/div>
+    return <div className="loading-state">正在验证账号状态…</div>
   }
 
   return children
 }
 
 export default ProtectedRoute
-

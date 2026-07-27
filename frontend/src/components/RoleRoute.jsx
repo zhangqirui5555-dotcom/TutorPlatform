@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from 'react-router-dom'
 import {
   clearAuth,
@@ -5,6 +6,7 @@ import {
   getToken,
   getUser,
 } from '../utils/auth.js'
+import ProtectedRoute from './ProtectedRoute.jsx'
 
 function RoleRoute({ allowedRole, children }) {
   const location = useLocation()
@@ -20,7 +22,8 @@ function RoleRoute({ allowedRole, children }) {
     return <Navigate replace to={getDashboardPath(user.role)} />
   }
 
-  return children
+  return <ProtectedRoute>{children}</ProtectedRoute>
 }
 
 export default RoleRoute
+

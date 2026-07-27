@@ -5,6 +5,7 @@ const MODULES = [
     icon: '◎',
     title: '个人资料',
     description: '完善简历并管理学生认证。',
+    to: '/student/profile',
   },
   {
     icon: '⌕',

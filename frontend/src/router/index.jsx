@@ -19,6 +19,7 @@ import StudentApplicationPage from '../pages/StudentApplicationPage.jsx'
 import StudentDemandDetailPage from '../pages/StudentDemandDetailPage.jsx'
 import StudentDemandPage from '../pages/StudentDemandPage.jsx'
 import StudentMessagePage from '../pages/StudentMessagePage.jsx'
+import StudentProfilePage from '../pages/StudentProfilePage.jsx'
 import StudentReviewPage from '../pages/StudentReviewPage.jsx'
 import StudentTrialLessonPage from '../pages/StudentTrialLessonPage.jsx'
 
@@ -116,6 +117,14 @@ const router = createBrowserRouter([
         element: (
           <RoleRoute allowedRole="STUDENT">
             <StudentDemandPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'student/profile',
+        element: (
+          <RoleRoute allowedRole="STUDENT">
+            <StudentProfilePage />
           </RoleRoute>
         ),
       },

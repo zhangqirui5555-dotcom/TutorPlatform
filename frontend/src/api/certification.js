@@ -38,9 +38,13 @@ export async function rejectCertification(id, reason) {
   return response.data.certification
 }
 
-export function getMaterialUrl(materialPath) {
-  const apiBase = client.defaults.baseURL
-  const serverBase = apiBase.replace(/\/api\/v1$/, '')
-  return `${serverBase}/${materialPath}`
+export async function openCertificationMaterial(id, audience) {
+  const prefix = audience === 'admin' ? '/admin/certifications' : '/certifications'
+  const response = await client.get(`${prefix}/${id}/material`, {
+    responseType: 'blob',
+  })
+  const objectUrl = URL.createObjectURL(response.data)
+  window.open(objectUrl, '_blank', 'noopener,noreferrer')
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
 }
 

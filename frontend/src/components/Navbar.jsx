@@ -1,7 +1,8 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { getDashboardPath, getToken, getUser } from '../utils/auth.js'
 
 function Navbar() {
+  useLocation()
   const user = getUser()
   const isAuthenticated = Boolean(getToken() && user)
 

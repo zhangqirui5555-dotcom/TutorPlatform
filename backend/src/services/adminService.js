@@ -174,10 +174,47 @@ async function closeDemand(demandId) {
   return toGovernanceDemand(updated)
 }
 
+async function reopenDemand(demandId) {
+  const demand = await prisma.demand.findUnique({
+    where: { id: demandId },
+    include: {
+      parent: { select: { id: true, displayName: true, email: true } },
+      _count: { select: { applications: true } },
+    },
+  })
+
+  if (!demand) {
+    throw new AppError(404, "DEMAND_NOT_FOUND", "Demand was not found")
+  }
+
+  if (demand.status !== "CLOSED") {
+    throw new AppError(
+      409,
+      "DEMAND_CANNOT_BE_REOPENED",
+      "Only closed demands can be reopened",
+    )
+  }
+
+  const updated = await prisma.demand.update({
+    where: { id: demandId },
+    data: {
+      status: demand.publishedAt ? "RECRUITING" : "DRAFT",
+      closedAt: null,
+    },
+    include: {
+      parent: { select: { id: true, displayName: true, email: true } },
+      _count: { select: { applications: true } },
+    },
+  })
+
+  return toGovernanceDemand(updated)
+}
+
 module.exports = {
   closeDemand,
   getGovernanceOverview,
   getUsers,
+  reopenDemand,
   updateUserStatus,
 }
 

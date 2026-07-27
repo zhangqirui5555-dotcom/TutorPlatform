@@ -1041,6 +1041,43 @@
   resize: vertical;
 }
 
+.certification-form {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.certification-form label {
+  display: grid;
+  flex: 1;
+  gap: 0.45rem;
+}
+
+.certification-form label > span,
+.candidate-card label > span {
+  color: var(--heading);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.candidate-card label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.candidate-card label input {
+  min-height: 42px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  font: inherit;
+}
+
+.certification-history {
+  margin-top: 1rem;
+}
+
 .demand-form input:focus,
 .demand-form textarea:focus {
   border-color: var(--primary);
@@ -2064,3 +2101,4 @@
     grid-template-columns: 1fr;
   }
 }
+

@@ -24,10 +24,16 @@ async function closeDemand(req, res) {
   res.json({ demand })
 }
 
+async function reopenDemand(req, res) {
+  const demand = await adminService.reopenDemand(Number(req.params.id))
+  res.json({ demand })
+}
+
 module.exports = {
   closeDemand,
   getGovernanceOverview,
   getUsers,
+  reopenDemand,
   updateUserStatus,
 }
 

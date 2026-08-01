@@ -12,6 +12,23 @@ router.use(authenticate, requireRole("ADMIN"))
 router.get("/users", asyncHandler(adminController.getUsers))
 router.patch("/users/:id/status", asyncHandler(adminController.updateUserStatus))
 router.get("/governance", asyncHandler(adminController.getGovernanceOverview))
+router.get("/demands", asyncHandler(adminController.getDemands))
+router.patch(
+  "/demands/:id/visibility",
+  asyncHandler(adminController.updateDemandVisibility),
+)
+router.patch(
+  "/demands/:id/feature",
+  asyncHandler(adminController.updateDemandFeature),
+)
+router.patch(
+  "/demands/:id/expiry",
+  asyncHandler(adminController.updateDemandExpiry),
+)
+router.get(
+  "/demands/:id/operation-logs",
+  asyncHandler(adminController.getDemandOperationLogs),
+)
 router.post("/demands/:id/close", asyncHandler(adminController.closeDemand))
 router.post("/demands/:id/reopen", asyncHandler(adminController.reopenDemand))
 router.get(

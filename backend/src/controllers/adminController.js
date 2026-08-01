@@ -1,4 +1,55 @@
 const adminService = require("../services/adminService")
+const adminDemandService = require("../services/adminDemandService")
+
+function requestContext(req) {
+  return {
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+  }
+}
+
+async function getDemands(req, res) {
+  const result = await adminDemandService.getDemands(req.query || {})
+  res.json(result)
+}
+
+async function updateDemandVisibility(req, res) {
+  const demand = await adminDemandService.updateVisibility(
+    req.params.id,
+    req.body || {},
+    req.user.id,
+    requestContext(req),
+  )
+  res.json({ demand })
+}
+
+async function updateDemandFeature(req, res) {
+  const demand = await adminDemandService.updateFeature(
+    req.params.id,
+    req.body || {},
+    req.user.id,
+    requestContext(req),
+  )
+  res.json({ demand })
+}
+
+async function updateDemandExpiry(req, res) {
+  const demand = await adminDemandService.updateExpiry(
+    req.params.id,
+    req.body || {},
+    req.user.id,
+    requestContext(req),
+  )
+  res.json({ demand })
+}
+
+async function getDemandOperationLogs(req, res) {
+  const result = await adminDemandService.getOperationLogs(
+    req.params.id,
+    req.query || {},
+  )
+  res.json(result)
+}
 
 async function getUsers(req, res) {
   const users = await adminService.getUsers(req.query || {})
@@ -31,9 +82,14 @@ async function reopenDemand(req, res) {
 
 module.exports = {
   closeDemand,
+  getDemandOperationLogs,
+  getDemands,
   getGovernanceOverview,
   getUsers,
   reopenDemand,
+  updateDemandExpiry,
+  updateDemandFeature,
+  updateDemandVisibility,
   updateUserStatus,
 }
 

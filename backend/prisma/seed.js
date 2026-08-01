@@ -4,6 +4,20 @@ const bcrypt = require("bcrypt")
 const { PrismaPg } = require("@prisma/adapter-pg")
 const { PrismaClient } = require("@prisma/client")
 
+const productionEnvironment = [
+  process.env.NODE_ENV,
+  process.env.RAILWAY_ENVIRONMENT,
+  process.env.RAILWAY_ENVIRONMENT_NAME,
+].some((value) => value?.trim().toLowerCase() === "production")
+
+if (productionEnvironment) {
+  throw new Error("Demo seed is disabled in production environments")
+}
+
+if (process.env.ALLOW_DEMO_SEED !== "true") {
+  throw new Error("Set ALLOW_DEMO_SEED=true to run the demo seed outside production")
+}
+
 const databaseUrl = process.env.DATABASE_URL
 
 if (!databaseUrl) {

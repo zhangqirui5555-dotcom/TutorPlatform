@@ -32,6 +32,7 @@ model User {
   proposedTrialLessons   TrialLesson[]   @relation("ProposedTrialLessons")
   reviewsWritten         Review[]        @relation("ReviewsWritten")
   reviewsReceived        Review[]        @relation("ReviewsReceived")
+  adminOperationLogs     AdminOperationLog[] @relation("AdminOperationLogs")
 
   @@index([role, status])
 }
@@ -91,6 +92,16 @@ model Demand {
   priceUnit           String    @default("PER_HOUR")
   currency            String    @default("CNY")
   description         String?
+  visibilityStatus    String    @default("HIDDEN")
+  publicSummary       String?
+  isFeatured          Boolean   @default(false)
+  sortWeight          Int       @default(0)
+  featuredAt          DateTime?
+  featuredUntil       DateTime?
+  expiresAt           DateTime?
+  listedAt            DateTime?
+  unlistedAt          DateTime?
+  viewCount           Int       @default(0)
   status              String    @default("DRAFT")
   publishedAt         DateTime?
   matchedAt           DateTime?
@@ -106,6 +117,29 @@ model Demand {
 
   @@index([parentId, status])
   @@index([status, subject, region, publishedAt])
+  @@index([status, visibilityStatus, expiresAt, publishedAt])
+  @@index([isFeatured, visibilityStatus, sortWeight, featuredUntil])
+  @@index([parentId, visibilityStatus, status])
+}
+
+model AdminOperationLog {
+  id         Int      @id @default(autoincrement())
+  adminId    Int
+  action     String
+  targetType String
+  targetId   Int
+  beforeData Json?
+  afterData  Json?
+  reason     String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation("AdminOperationLogs", fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([action, createdAt])
 }
 
 model Application {

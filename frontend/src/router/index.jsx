@@ -3,6 +3,7 @@ import App from '../App.jsx'
 import ProtectedRoute from '../components/ProtectedRoute.jsx'
 import RoleRoute from '../components/RoleRoute.jsx'
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx'
+import AdminDemandPage from '../pages/AdminDemandPage.jsx'
 import AdminCertificationPage from '../pages/AdminCertificationPage.jsx'
 import AdminGovernancePage from '../pages/AdminGovernancePage.jsx'
 import AdminUserPage from '../pages/AdminUserPage.jsx'
@@ -17,6 +18,7 @@ import ParentDemandPage from '../pages/ParentDemandPage.jsx'
 import ParentMessagePage from '../pages/ParentMessagePage.jsx'
 import ParentReviewPage from '../pages/ParentReviewPage.jsx'
 import ParentTrialLessonPage from '../pages/ParentTrialLessonPage.jsx'
+import PublicDemandDetailPage from '../pages/PublicDemandDetailPage.jsx'
 import RegisterPage from '../pages/RegisterPage.jsx'
 import StudentDashboardPage from '../pages/StudentDashboardPage.jsx'
 import StudentApplicationPage from '../pages/StudentApplicationPage.jsx'
@@ -44,6 +46,10 @@ const router = createBrowserRouter([
       {
         path: 'register',
         element: <RegisterPage />,
+      },
+      {
+        path: 'demands/:id',
+        element: <PublicDemandDetailPage />,
       },
       {
         path: 'dashboard',
@@ -210,6 +216,14 @@ const router = createBrowserRouter([
         element: (
           <RoleRoute allowedRole="ADMIN">
             <AdminUserPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'admin/demands',
+        element: (
+          <RoleRoute allowedRole="ADMIN">
+            <AdminDemandPage />
           </RoleRoute>
         ),
       },

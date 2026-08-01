@@ -92,6 +92,7 @@ function matchesAdminWhere(item, where) {
       continue
     }
     const matches = condition.OR.some((part) => {
+      if (part.id !== undefined) return item.id === part.id
       const search = part.title?.contains ||
         part.parent?.is?.displayName?.contains ||
         part.parent?.is?.email?.contains
@@ -196,7 +197,7 @@ async function request(path, { token = tokenFor(users[1]), method = "GET", body 
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: {
-      "content-type": "application/json",
+      "content-type": "application/json; charset=utf-8",
       ...(token ? { authorization: `Bearer ${token}` } : {}),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -242,6 +243,56 @@ test("admin demand list supports pagination and filters", async () => {
   assert.equal(lastListQuery.take, 1)
   assert.equal(lastListQuery.where.visibilityStatus, "VISIBLE")
   assert.equal(lastListQuery.where.isFeatured, true)
+})
+
+test("numeric search matches an exact demand ID while retaining fuzzy search", async () => {
+  demands = [
+    demand({ id: 3, title: "Stage A smoke demand" }),
+    demand({ id: 30, title: "Demand 3 in title" }),
+    demand({ id: 31, parent: parent({ displayName: "Parent 3" }) }),
+    demand({ id: 32, parent: parent({ email: "parent3@test.com" }) }),
+  ]
+
+  const response = await request("/api/v1/admin/demands?search=3")
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(
+    response.body.demands.map((item) => item.id).sort((left, right) => left - right),
+    [3, 30, 31, 32],
+  )
+  const searchParts = lastListQuery.where.AND[0].OR
+  assert.deepEqual(searchParts.find((part) => part.id !== undefined), { id: 3 })
+})
+
+test("title, parent name, and email fuzzy search remain available", async () => {
+  demands = [
+    demand({ id: 41, title: "Algebra tutoring" }),
+    demand({ id: 42, parent: parent({ displayName: "Searchable Parent" }) }),
+    demand({ id: 43, parent: parent({ email: "lookup-parent@test.com" }) }),
+  ]
+
+  for (const [search, expectedId] of [
+    ["Algebra", 41],
+    ["Searchable", 42],
+    ["lookup-parent", 43],
+  ]) {
+    const response = await request(`/api/v1/admin/demands?search=${encodeURIComponent(search)}`)
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.body.demands.map((item) => item.id), [expectedId])
+  }
+})
+
+test("non-numeric search does not add an ID condition", async () => {
+  demands = [demand({ id: 51, title: "Demand ABC123" })]
+
+  const response = await request("/api/v1/admin/demands?search=ABC123")
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(response.body.demands.map((item) => item.id), [51])
+  assert.equal(
+    lastListQuery.where.AND[0].OR.some((part) => part.id !== undefined),
+    false,
+  )
 })
 
 test("draft, matched, and completed demands cannot be listed", async () => {

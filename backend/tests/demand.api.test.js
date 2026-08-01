@@ -35,7 +35,7 @@ after(async () => {
 
 async function request(path, { token, ...options } = {}) {
   const headers = {
-    "content-type": "application/json",
+    "content-type": "application/json; charset=utf-8",
     ...options.headers,
   }
 
@@ -143,12 +143,14 @@ test("parent can create, query, publish, and close a demand", async () => {
   const marker = Date.now()
   const subject = `DEMO_SUBJECT_${marker}`
   const region = `DEMO_REGION_${marker}`
+  const utf8Title = `UTF-8 中文家教需求 ${marker}`
+  const utf8Description = "中文内容应当被完整保存和读取"
 
   const created = await request("/api/v1/demands", {
     method: "POST",
     token,
     body: JSON.stringify({
-      title: `Demand API test ${marker}`,
+      title: utf8Title,
       child_grade: "初二",
       subject,
       region,
@@ -156,18 +158,22 @@ test("parent can create, query, publish, and close a demand", async () => {
       schedule_description: "周末下午",
       budget_min: 10000,
       budget_max: 18000,
-      description: "阶段 6 集成测试需求",
+      description: utf8Description,
     }),
   })
 
   assert.equal(created.status, 201)
   assert.equal(created.body.demand.status, "DRAFT")
   assert.equal(created.body.demand.parent_id, login.body.user.id)
+  assert.equal(created.body.demand.title, utf8Title)
+  assert.equal(created.body.demand.description, utf8Description)
   const demandId = created.body.demand.id
 
   const ownerDetail = await request(`/api/v1/demands/${demandId}`, { token })
   assert.equal(ownerDetail.status, 200)
   assert.equal(ownerDetail.body.demand.address_detail, "测试地址")
+  assert.equal(ownerDetail.body.demand.title, utf8Title)
+  assert.equal(ownerDetail.body.demand.description, utf8Description)
 
   const mine = await request("/api/v1/parents/me/demands", { token })
   assert.equal(mine.status, 200)

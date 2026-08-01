@@ -1,10 +1,16 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { getDashboardPath, getToken, getUser } from '../utils/auth.js'
 
 function Navbar() {
-  useLocation()
+  const location = useLocation()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const user = getUser()
   const isAuthenticated = Boolean(getToken() && user)
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname])
 
   return (
     <header className="site-navbar">
@@ -16,7 +22,24 @@ function Navbar() {
         </span>
       </NavLink>
 
-      <nav className="app-nav" aria-label="主导航">
+      <button
+        aria-controls="primary-navigation"
+        aria-expanded={isMenuOpen}
+        aria-label={isMenuOpen ? '关闭导航菜单' : '打开导航菜单'}
+        className="nav-menu-button"
+        onClick={() => setIsMenuOpen((current) => !current)}
+        type="button"
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
+      <nav
+        className={`app-nav ${isMenuOpen ? 'is-open' : ''}`}
+        id="primary-navigation"
+        aria-label="主导航"
+      >
         <NavLink end to="/">首页</NavLink>
         {isAuthenticated ? (
           <NavLink className="nav-cta" to={getDashboardPath(user.role)}>

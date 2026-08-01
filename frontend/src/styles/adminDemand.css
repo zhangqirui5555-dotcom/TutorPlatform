@@ -1,0 +1,60 @@
+.admin-demand-page { max-width: 1500px; margin: 0 auto; }
+.admin-demand-heading { align-items: flex-end; display: flex; justify-content: space-between; gap: 24px; }
+.admin-demand-filter { background: #fff; border: 1px solid #dfe8e4; border-radius: 20px; display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(150px, 1fr)); margin: 24px 0; padding: 20px; }
+.admin-demand-filter label, .admin-demand-dialog label { display: grid; gap: 7px; color: #17332d; font-weight: 700; }
+.admin-demand-filter input, .admin-demand-filter select, .admin-demand-dialog input, .admin-demand-dialog textarea { border: 1px solid #d7e2de; border-radius: 10px; box-sizing: border-box; font: inherit; min-height: 44px; padding: 10px 12px; width: 100%; }
+.admin-demand-filter__actions { align-items: end; display: flex; gap: 10px; }
+.admin-demand-filter__actions button, .admin-demand-heading a { min-height: 44px; }
+.admin-demand-table-wrap { background: #fff; border: 1px solid #dfe8e4; border-radius: 20px; overflow-x: auto; }
+.admin-demand-table { border-collapse: collapse; min-width: 1050px; width: 100%; }
+.admin-demand-table th, .admin-demand-table td { border-bottom: 1px solid #e4ebe8; padding: 16px; text-align: left; vertical-align: top; }
+.admin-demand-table th { background: #f5f8f7; color: #536d66; }
+.admin-demand-table td > span, .admin-demand-table td > small { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+.status-chip { background: #eef1f0; border-radius: 999px; color: #52645f; display: inline-block !important; padding: 4px 9px; width: fit-content; }
+.status-chip.is-visible { background: #e2f5eb; color: #086547; }
+.status-chip.is-featured { background: #fff1cc; color: #805b00; }
+.admin-demand-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.admin-demand-actions button, .log-button, .pagination button { background: #fff; border: 1px solid #b9cbc5; border-radius: 9px; color: #0b6754; cursor: pointer; min-height: 40px; padding: 8px 11px; }
+.log-button { margin-top: 8px; }
+.admin-demand-modal { align-items: center; background: rgba(8, 29, 24, .58); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 1000; }
+.admin-demand-dialog { background: #fff; border-radius: 18px; box-sizing: border-box; max-height: 90vh; max-width: 580px; overflow-y: auto; padding: 24px; width: 100%; }
+.admin-demand-log-dialog { max-width: 760px; }
+.dialog-heading { align-items: flex-start; display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.dialog-heading h2, .dialog-heading p { margin: 0 0 6px; overflow-wrap: anywhere; }
+.dialog-heading > button { background: transparent; border: 0; cursor: pointer; font-size: 28px; min-height: 44px; min-width: 44px; }
+.admin-demand-dialog form { display: grid; gap: 15px; }
+.admin-demand-dialog textarea { min-height: 96px; resize: vertical; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.dialog-actions button { min-height: 44px; }
+.field-error { color: #a42727; margin: 0; }
+.admin-demand-log { border: 1px solid #e1e8e5; border-radius: 12px; margin: 12px 0; padding: 14px; }
+.admin-demand-log header { display: flex; justify-content: space-between; gap: 14px; }
+.admin-demand-log p { margin: 7px 0; }
+.log-changes { margin: 8px 0 0; padding-left: 20px; }
+.pagination { align-items: center; display: flex; justify-content: center; gap: 14px; margin: 22px 0; }
+.pagination button:disabled { cursor: not-allowed; opacity: .45; }
+.empty-inline { color: #667a75; padding: 28px 0; text-align: center; }
+
+@media (max-width: 900px) {
+  .admin-demand-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-demand-table-wrap { background: transparent; border: 0; overflow: visible; }
+  .admin-demand-table { min-width: 0; }
+  .admin-demand-table thead { display: none; }
+  .admin-demand-table, .admin-demand-table tbody, .admin-demand-table tr, .admin-demand-table td { display: block; width: 100%; }
+  .admin-demand-table tr { background: #fff; border: 1px solid #dfe8e4; border-radius: 16px; box-sizing: border-box; margin-bottom: 14px; overflow: hidden; }
+  .admin-demand-table td { box-sizing: border-box; display: grid; gap: 6px; grid-template-columns: minmax(90px, 28%) minmax(0, 1fr); }
+  .admin-demand-table td::before { color: #60756e; content: attr(data-label); font-weight: 700; grid-row: 1 / span 8; }
+  .admin-demand-actions button, .log-button { min-height: 44px; }
+}
+@media (max-width: 560px) {
+  .admin-demand-page { overflow-x: clip; padding-left: 14px; padding-right: 14px; }
+  .admin-demand-heading { align-items: stretch; flex-direction: column; }
+  .admin-demand-heading .secondary-button { align-self: flex-start; }
+  .admin-demand-filter { grid-template-columns: minmax(0, 1fr); padding: 15px; }
+  .admin-demand-filter__actions, .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .admin-demand-table td { grid-template-columns: minmax(82px, 32%) minmax(0, 1fr); padding: 13px; }
+  .admin-demand-modal { padding: 10px; }
+  .admin-demand-dialog { padding: 17px; }
+  .admin-demand-log header { flex-direction: column; }
+  .pagination { flex-wrap: wrap; font-size: .9rem; gap: 8px; }
+}

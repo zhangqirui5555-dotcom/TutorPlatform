@@ -1,0 +1,409 @@
+/* Stage A Step 6: mobile-only layout overrides. Desktop behavior stays in App.css. */
+.nav-menu-button,
+.chat-back-button {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root,
+  .app-shell {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .app-main {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 1.25rem max(1rem, env(safe-area-inset-left));
+  }
+
+  .site-navbar {
+    align-items: center;
+    flex-direction: row;
+    gap: 0.75rem;
+    min-height: 64px;
+    padding: 0.65rem max(1rem, env(safe-area-inset-left));
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-menu-button {
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    flex: 0 0 44px;
+    flex-direction: column;
+    gap: 4px;
+    height: 44px;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0;
+  }
+
+  .nav-menu-button span {
+    background: var(--heading);
+    border-radius: 2px;
+    height: 2px;
+    width: 20px;
+  }
+
+  .site-navbar .app-nav {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    box-shadow: 0 14px 30px rgba(16, 46, 39, 0.14);
+    display: none;
+    flex-direction: column;
+    gap: 0.25rem;
+    left: 1rem;
+    padding: 0.5rem;
+    position: absolute;
+    right: 1rem;
+    top: calc(100% + 0.35rem);
+    width: auto;
+  }
+
+  .site-navbar .app-nav.is-open {
+    display: flex;
+  }
+
+  .site-navbar .app-nav a {
+    align-items: center;
+    display: flex;
+    flex: none;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.65rem 0.9rem;
+  }
+
+  .home-page .home-hero {
+    gap: 1.25rem;
+    min-height: 0;
+    padding-block: 0.5rem 1rem;
+  }
+
+  .home-page .hero-copy h1 {
+    font-size: clamp(2.25rem, 12vw, 3.5rem);
+    line-height: 1.02;
+  }
+
+  .home-page .hero-copy p {
+    font-size: 0.96rem;
+  }
+
+  .home-page .hero-visual {
+    min-height: 250px;
+  }
+
+  .home-demand-grid,
+  .opportunity-grid,
+  .candidate-grid,
+  .trial-grid,
+  .review-columns,
+  .review-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .workspace-header,
+  .form-page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace-header > a,
+  .form-page-header > a,
+  .workspace-header > button {
+    align-items: center;
+    align-self: flex-start;
+    display: inline-flex;
+    min-height: 44px;
+  }
+
+  .filter-bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .filter-bar label {
+    grid-column: 1 / -1;
+  }
+
+  .filter-bar input,
+  .filter-bar button,
+  .opportunity-card > a {
+    min-height: 44px;
+  }
+
+  .opportunity-card {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .opportunity-card h2,
+  .opportunity-card dd,
+  .detail-grid dd,
+  .detail-description p,
+  .cover-message p {
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .opportunity-card > a {
+    align-items: center;
+    display: inline-flex;
+  }
+
+  .demand-detail-card,
+  .demand-form-card {
+    box-sizing: border-box;
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .demand-detail-card > header,
+  .detail-grid,
+  .demand-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-panel form .primary-button,
+  .demand-form .primary-button,
+  .demand-form .secondary-link-button {
+    min-height: 46px;
+  }
+
+  .application-panel textarea,
+  .demand-form input,
+  .demand-form textarea {
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-actions > * {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+
+  .candidate-card {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .candidate-card > header {
+    align-items: start;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .candidate-card > header .status-tag {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .candidate-actions,
+  .trial-actions,
+  .review-form-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .candidate-actions button,
+  .trial-actions button,
+  .review-form-actions button,
+  .review-entry-card > button {
+    min-height: 44px;
+  }
+
+  .trial-create-panel,
+  .trial-card,
+  .review-section,
+  .review-entry-card,
+  .review-card {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .trial-form,
+  .trial-meta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .trial-form input,
+  .trial-form select,
+  .trial-form button,
+  .review-form select,
+  .review-form textarea {
+    box-sizing: border-box;
+    font-size: 16px;
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .trial-card > header,
+  .review-section-heading,
+  .review-card header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .message-page {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .messenger-layout {
+    display: block;
+    height: min(720px, calc(100dvh - 150px));
+    min-height: 420px;
+    width: 100%;
+  }
+
+  .conversation-sidebar {
+    border: 0;
+    display: block;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+  }
+
+  .conversation-sidebar > button {
+    box-sizing: border-box;
+    min-height: 76px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .chat-panel {
+    display: none;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .messenger-layout.mobile-chat-open .conversation-sidebar {
+    display: none;
+  }
+
+  .messenger-layout.mobile-chat-open .chat-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .chat-back-button {
+    background: transparent;
+    border: 0;
+    color: var(--primary);
+    cursor: pointer;
+    display: inline-flex;
+    min-height: 44px;
+    padding: 0 0.5rem 0 0;
+  }
+
+  .chat-panel > header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .chat-panel header p,
+  .message-bubble p {
+    overflow-wrap: anywhere;
+  }
+
+  .message-history {
+    max-height: none;
+    min-height: 0;
+    padding: 0.75rem;
+  }
+
+  .message-bubble {
+    max-width: 86%;
+  }
+
+  .message-composer {
+    background: #fff;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 0.65rem;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+  }
+
+  .message-composer textarea {
+    box-sizing: border-box;
+    font-size: 16px;
+    max-height: 96px;
+    min-height: 44px;
+  }
+
+  .message-composer button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand small {
+    display: none;
+  }
+
+  .brand-mark {
+    height: 36px;
+    width: 36px;
+  }
+
+  .filter-bar,
+  .form-actions,
+  .candidate-actions,
+  .trial-actions,
+  .review-form-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .opportunity-card dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .message-composer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .home-page .hero-visual {
+    display: none;
+  }
+
+  .home-page .home-hero {
+    gap: 0.75rem;
+  }
+
+  .home-page .hero-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-page .hero-actions a {
+    box-sizing: border-box;
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+  }
+}

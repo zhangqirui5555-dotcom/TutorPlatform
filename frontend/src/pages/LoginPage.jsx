@@ -26,7 +26,16 @@ function LoginPage() {
     try {
       const response = await client.post('/auth/login', form)
       saveAuth(response.data.token, response.data.user)
-      navigate(getDashboardPath(response.data.user.role), { replace: true })
+      const returnPath = location.state?.from
+      const safeReturnPath =
+        typeof returnPath === 'string' &&
+        returnPath.startsWith('/') &&
+        !returnPath.startsWith('//')
+          ? returnPath
+          : null
+      navigate(safeReturnPath || getDashboardPath(response.data.user.role), {
+        replace: true,
+      })
     } catch (requestError) {
       setError(
         requestError.response?.data?.error?.message ||

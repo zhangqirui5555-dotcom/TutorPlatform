@@ -1,4 +1,8 @@
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { getFeaturedDemands, getPublicDemands } from '../api/publicDemand.js'
+import HomeDemandSection from '../components/HomeDemandSection.jsx'
+import '../styles/homeDemand.css'
 
 const STEPS = [
   ['01', '发布需求', '家长填写科目、时间、区域与预算。'],
@@ -8,6 +12,50 @@ const STEPS = [
 ]
 
 function HomePage() {
+  const [featuredDemands, setFeaturedDemands] = useState([])
+  const [featuredError, setFeaturedError] = useState('')
+  const [featuredLoading, setFeaturedLoading] = useState(true)
+  const [latestDemands, setLatestDemands] = useState([])
+  const [latestError, setLatestError] = useState('')
+  const [latestLoading, setLatestLoading] = useState(true)
+  const [latestLimit, setLatestLimit] = useState(6)
+
+  const loadFeatured = useCallback(async () => {
+    setFeaturedError('')
+    setFeaturedLoading(true)
+    try {
+      const result = await getFeaturedDemands({ page: 1, page_size: 3 })
+      setFeaturedDemands(result.demands || [])
+    } catch (error) {
+      setFeaturedError(error.message)
+    } finally {
+      setFeaturedLoading(false)
+    }
+  }, [])
+
+  const loadLatest = useCallback(async (pageSize = 6) => {
+    setLatestError('')
+    setLatestLoading(true)
+    try {
+      const result = await getPublicDemands({ page: 1, page_size: pageSize })
+      setLatestDemands(result.demands || [])
+    } catch (error) {
+      setLatestError(error.message)
+    } finally {
+      setLatestLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadFeatured()
+    loadLatest(6)
+  }, [loadFeatured, loadLatest])
+
+  function showMoreDemands() {
+    setLatestLimit(20)
+    loadLatest(20)
+  }
+
   return (
     <div className="home-page">
       <section className="home-hero">
@@ -48,6 +96,39 @@ function HomePage() {
           <div className="match-success">✓ 已建立可信连接</div>
         </div>
       </section>
+
+      <div className="home-demand-groups">
+        <HomeDemandSection
+          demands={featuredDemands}
+          description="由平台运营审核并在有效推荐时间内展示，所有内容均经过脱敏。"
+          emptyDescription="运营审核通过推荐需求后，将在这里展示。"
+          emptyTitle="暂无推荐需求"
+          error={featuredError}
+          eyebrow="Featured opportunities"
+          isLoading={featuredLoading}
+          onRetry={loadFeatured}
+          title="推荐家教需求"
+        />
+
+        <div id="latest-demands">
+          <HomeDemandSection
+            demands={latestDemands}
+            description="浏览平台当前公开、招募中且未过期的家教机会。"
+            emptyDescription="暂时没有通过审核的公开需求，请稍后再来看看。"
+            emptyTitle="暂无公开需求"
+            error={latestError}
+            eyebrow="Latest opportunities"
+            isLoading={latestLoading}
+            onRetry={() => loadLatest(latestLimit)}
+            title="最新家教需求"
+          />
+          {!latestError && !latestLoading && latestLimit < 20 && latestDemands.length >= 6 && (
+            <div className="home-demand-more">
+              <button onClick={showMoreDemands} type="button">查看更多需求</button>
+            </div>
+          )}
+        </div>
+      </div>
 
       <section className="audience-section">
         <article>

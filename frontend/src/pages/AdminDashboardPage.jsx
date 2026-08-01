@@ -14,6 +14,12 @@ const MODULES = [
     to: '/admin/users',
   },
   {
+    icon: '▤',
+    title: '需求运营',
+    description: '管理需求上架、推荐与公开有效期。',
+    to: '/admin/demands',
+  },
+  {
     icon: '△',
     title: '平台治理',
     description: '维护平台内容与撮合秩序。',

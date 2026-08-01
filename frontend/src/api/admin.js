@@ -25,3 +25,28 @@ export async function reopenGovernanceDemand(id) {
   return response.data.demand
 }
 
+export async function getAdminDemands(params = {}) {
+  const response = await client.get('/admin/demands', { params })
+  return response.data
+}
+
+export async function updateDemandVisibility(id, data) {
+  const response = await client.patch(`/admin/demands/${id}/visibility`, data)
+  return response.data.demand
+}
+
+export async function updateDemandFeature(id, data) {
+  const response = await client.patch(`/admin/demands/${id}/feature`, data)
+  return response.data.demand
+}
+
+export async function updateDemandExpiry(id, data) {
+  const response = await client.patch(`/admin/demands/${id}/expiry`, data)
+  return response.data.demand
+}
+
+export async function getDemandOperationLogs(id, params = {}) {
+  const response = await client.get(`/admin/demands/${id}/operation-logs`, { params })
+  return response.data
+}
+

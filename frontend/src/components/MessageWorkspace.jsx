@@ -33,6 +33,7 @@ function MessageWorkspace({ eyebrow, title }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
 
   const loadConversationMessages = useCallback(async (conversationId) => {
     setError('')
@@ -172,7 +173,7 @@ function MessageWorkspace({ eyebrow, title }) {
           title="暂无会话"
         />
       ) : (
-        <div className="messenger-layout">
+        <div className={`messenger-layout ${isMobileChatOpen ? 'mobile-chat-open' : ''}`}>
           <aside className="conversation-sidebar">
             {conversations.map((conversation) => (
               <button
@@ -180,7 +181,10 @@ function MessageWorkspace({ eyebrow, title }) {
                   conversation.id === activeConversationId ? 'active' : undefined
                 }
                 key={conversation.id}
-                onClick={() => setActiveConversationId(conversation.id)}
+                onClick={() => {
+                  setActiveConversationId(conversation.id)
+                  setIsMobileChatOpen(true)
+                }}
                 type="button"
               >
                 <div className="conversation-avatar">
@@ -202,6 +206,13 @@ function MessageWorkspace({ eyebrow, title }) {
 
           <section className="chat-panel">
             <header>
+              <button
+                className="chat-back-button"
+                onClick={() => setIsMobileChatOpen(false)}
+                type="button"
+              >
+                返回会话
+              </button>
               <div>
                 <h2>
                   {activeConversation?.other_participant?.display_name || '站内会话'}

@@ -6,7 +6,7 @@
   },
   "deploy": {
     "preDeployCommand": [
-      "npm run prisma:deploy && npm run prisma:seed"
+      "npm run prisma:deploy"
     ],
     "startCommand": "npm start",
     "healthcheckPath": "/health",

@@ -243,8 +243,12 @@ async function getDemands(query = {}) {
   const and = []
 
   if (search) {
+    const exactDemandId = /^\d+$/.test(search) ? Number(search) : null
     and.push({
       OR: [
+        ...(Number.isSafeInteger(exactDemandId) && exactDemandId > 0
+          ? [{ id: exactDemandId }]
+          : []),
         { title: { contains: search, mode: "insensitive" } },
         { parent: { is: { displayName: { contains: search, mode: "insensitive" } } } },
         { parent: { is: { email: { contains: search, mode: "insensitive" } } } },

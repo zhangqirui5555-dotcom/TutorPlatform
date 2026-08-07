@@ -1,6 +1,9 @@
 const prisma = require("../prisma/client")
+const notificationService = require("./notificationService")
 const AppError = require("../utils/AppError")
+const availableDemandWhere = require("../utils/demandAvailability")
 const toApplicationResponse = require("../utils/applicationResponse")
+const toOrderResponse = require("../utils/orderResponse")
 
 const UNRESOLVED_APPLICATION_STATUSES = ["PENDING", "VIEWED"]
 
@@ -50,7 +53,7 @@ async function submitApplication(studentId, demandIdInput, input) {
 
   const demand = await prisma.demand.findUnique({
     where: { id: demandId },
-    select: { id: true, status: true },
+    select: { id: true, parentId: true, status: true },
   })
 
   if (!demand) {
@@ -66,19 +69,53 @@ async function submitApplication(studentId, demandIdInput, input) {
   }
 
   try {
-    const application = await prisma.application.create({
-      data: {
-        studentId,
-        demandId,
-        coverMessage,
-        status: "PENDING",
-      },
-      include: {
-        demand: true,
-      },
-    })
+    return await prisma.$transaction(async (transaction) => {
+      const availableDemand = await transaction.demand.findFirst({
+        where: {
+          id: demandId,
+          ...availableDemandWhere(new Date()),
+        },
+        select: { id: true },
+      })
 
-    return toApplicationResponse(application)
+      if (!availableDemand) {
+        throw new AppError(
+          409,
+          "DEMAND_NOT_AVAILABLE",
+          "This tutoring demand is not currently accepting applications",
+        )
+      }
+
+      const application = await transaction.application.create({
+        data: {
+          studentId,
+          demandId,
+          coverMessage,
+          status: "PENDING",
+        },
+        include: {
+          demand: true,
+        },
+      })
+
+      await notificationService.createNotification(transaction, {
+        recipientId: demand.parentId,
+        actorId: studentId,
+        eventKey: `APPLICATION_RECEIVED:${application.id}`,
+        type: "APPLICATION_RECEIVED",
+        title: "New tutoring application",
+        body: "A student submitted an application for your demand.",
+        resourceType: "APPLICATION",
+        resourceId: application.id,
+        actionPath: `/parent/demands/${demandId}/applications`,
+        payload: {
+          application_id: application.id,
+          demand_id: demandId,
+        },
+      })
+
+      return toApplicationResponse(application)
+    })
   } catch (error) {
     if (error.code === "P2002") {
       throw new AppError(
@@ -167,12 +204,152 @@ async function getApplicationForParent(transaction, applicationId, parentId) {
   return application
 }
 
+function assertMatchingResource(resource, application, parentId, resourceName) {
+  if (
+    resource.applicationId !== application.id ||
+    resource.demandId !== application.demandId ||
+    resource.parentId !== parentId ||
+    resource.studentId !== application.studentId
+  ) {
+    throw new AppError(
+      409,
+      `${resourceName}_RELATION_CONFLICT`,
+      `${resourceName} does not match the accepted application`,
+    )
+  }
+}
+
+function rejectedApplicationNotification(application, parentId) {
+  return {
+    recipientId: application.studentId,
+    actorId: parentId,
+    eventKey: `APPLICATION_REJECTED:${application.id}`,
+    type: "APPLICATION_REJECTED",
+    title: "Application not selected",
+    body: "The parent did not select your tutoring application.",
+    resourceType: "APPLICATION",
+    resourceId: application.id,
+    actionPath: "/student/applications",
+    payload: {
+      application_id: application.id,
+      demand_id: application.demandId,
+    },
+  }
+}
+
+async function ensureConversation(transaction, application, parentId) {
+  let conversation
+
+  try {
+    conversation = await transaction.conversation.upsert({
+      where: { applicationId: application.id },
+      update: {},
+      create: {
+        applicationId: application.id,
+        demandId: application.demandId,
+        parentId,
+        studentId: application.studentId,
+        status: "ACTIVE",
+      },
+    })
+  } catch (error) {
+    if (error.code === "P2002") {
+      throw new AppError(
+        409,
+        "CONVERSATION_ALREADY_EXISTS",
+        "This demand has already been matched",
+      )
+    }
+
+    throw error
+  }
+
+  assertMatchingResource(conversation, application, parentId, "CONVERSATION")
+  return conversation
+}
+
+async function ensureOrder(transaction, application, parentId) {
+  let order
+
+  try {
+    order = await transaction.order.upsert({
+      where: { applicationId: application.id },
+      update: {},
+      create: {
+        parentId,
+        studentId: application.studentId,
+        demandId: application.demandId,
+        applicationId: application.id,
+        status: "PENDING",
+      },
+    })
+  } catch (error) {
+    if (error.code === "P2002") {
+      throw new AppError(
+        409,
+        "ORDER_ALREADY_EXISTS",
+        "This demand already has an order for another application",
+      )
+    }
+
+    throw error
+  }
+
+  assertMatchingResource(order, application, parentId, "ORDER")
+  return order
+}
+
+async function buildAcceptedResult(transaction, application, parentId) {
+  const conversation = await ensureConversation(transaction, application, parentId)
+  const order = await ensureOrder(transaction, application, parentId)
+  const acceptedApplication = await transaction.application.findUnique({
+    where: { id: application.id },
+    include: { demand: true },
+  })
+
+  await notificationService.createNotification(transaction, {
+    recipientId: application.studentId,
+    actorId: parentId,
+    eventKey: `APPLICATION_ACCEPTED:${application.id}`,
+    type: "APPLICATION_ACCEPTED",
+    title: "Application accepted",
+    body: "The parent accepted your tutoring application.",
+    resourceType: "APPLICATION",
+    resourceId: application.id,
+    actionPath: "/student/applications",
+    payload: {
+      application_id: application.id,
+      demand_id: application.demandId,
+      conversation_id: conversation.id,
+      order_id: order.id,
+    },
+  })
+
+  return {
+    application: toApplicationResponse(acceptedApplication),
+    conversation: {
+      id: conversation.id,
+      application_id: conversation.applicationId,
+      demand_id: conversation.demandId,
+      parent_id: conversation.parentId,
+      student_id: conversation.studentId,
+      status: conversation.status,
+      created_at: conversation.createdAt,
+    },
+    order: toOrderResponse(order),
+  }
+}
+
 async function acceptApplication(parentId, applicationIdInput) {
   const applicationId = requirePositiveId(applicationIdInput, "application")
 
   try {
     return await prisma.$transaction(async (transaction) => {
       const application = await getApplicationForParent(transaction, applicationId, parentId)
+
+      if (application.status === "ACCEPTED") {
+        return buildAcceptedResult(transaction, application, parentId)
+      }
 
       if (!UNRESOLVED_APPLICATION_STATUSES.includes(application.status)) {
         throw new AppError(
@@ -203,12 +380,35 @@ async function acceptApplication(parentId, applicationIdInput) {
       })
 
       if (targetUpdate.count !== 1) {
+        const currentApplication = await getApplicationForParent(
+          transaction,
+          application.id,
+          parentId,
+        )
+
+        if (currentApplication.status === "ACCEPTED") {
+          return buildAcceptedResult(transaction, currentApplication, parentId)
+        }
+
         throw new AppError(
           409,
           "APPLICATION_ALREADY_DECIDED",
           "Application was already decided",
         )
       }
+
+      const applicationsToReject = await transaction.application.findMany({
+        where: {
+          demandId: application.demandId,
+          id: { not: application.id },
+          status: { in: UNRESOLVED_APPLICATION_STATUSES },
+        },
+        select: {
+          id: true,
+          studentId: true,
+          demandId: true,
+        },
+      })
 
       await transaction.application.updateMany({
         where: {
@@ -241,40 +441,23 @@ async function acceptApplication(parentId, applicationIdInput) {
         )
       }
 
-      const conversation = await transaction.conversation.create({
-        data: {
-          applicationId: application.id,
-          demandId: application.demandId,
-          parentId,
-          studentId: application.studentId,
-          status: "ACTIVE",
-        },
-      })
+      const result = await buildAcceptedResult(transaction, application, parentId)
 
-      const acceptedApplication = await transaction.application.findUnique({
-        where: { id: application.id },
-        include: { demand: true },
-      })
+      await notificationService.createNotifications(
+        transaction,
+        applicationsToReject.map((rejectedApplication) =>
+          rejectedApplicationNotification(rejectedApplication, parentId),
+        ),
+      )
 
-      return {
-        application: toApplicationResponse(acceptedApplication),
-        conversation: {
-          id: conversation.id,
-          application_id: conversation.applicationId,
-          demand_id: conversation.demandId,
-          parent_id: conversation.parentId,
-          student_id: conversation.studentId,
-          status: conversation.status,
-          created_at: conversation.createdAt,
-        },
-      }
+      return result
     })
   } catch (error) {
     if (error.code === "P2002") {
       throw new AppError(
         409,
-        "CONVERSATION_ALREADY_EXISTS",
-        "This demand has already been matched",
+        "MATCHING_RESOURCE_CONFLICT",
+        "This demand already has a conflicting conversation or order",
       )
     }
 
@@ -319,6 +502,14 @@ async function rejectApplication(parentId, applicationIdInput) {
       where: { id: application.id },
       include: { demand: true },
     })
+
+    await notificationService.createNotification(
+      transaction,
+      rejectedApplicationNotification(
+        rejectedApplication,
+        application.demand.parentId,
+      ),
+    )
 
     return toApplicationResponse(rejectedApplication)
   })

@@ -11,6 +11,7 @@ function toTrialLessonResponse(trialLesson) {
   const response = {
     id: trialLesson.id,
     application_id: trialLesson.applicationId,
+    order_id: trialLesson.orderId,
     demand_id: trialLesson.demandId,
     parent_id: trialLesson.parentId,
     student_id: trialLesson.studentId,

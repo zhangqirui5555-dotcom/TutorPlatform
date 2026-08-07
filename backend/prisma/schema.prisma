@@ -32,9 +32,38 @@ model User {
   proposedTrialLessons   TrialLesson[]   @relation("ProposedTrialLessons")
   reviewsWritten         Review[]        @relation("ReviewsWritten")
   reviewsReceived        Review[]        @relation("ReviewsReceived")
+  parentOrders           Order[]         @relation("ParentOrders")
+  studentOrders          Order[]         @relation("StudentOrders")
+  receivedNotifications  Notification[]  @relation("NotificationRecipient")
+  triggeredNotifications Notification[]  @relation("NotificationActor")
   adminOperationLogs     AdminOperationLog[] @relation("AdminOperationLogs")
 
   @@index([role, status])
+}
+
+model Notification {
+  id           Int       @id @default(autoincrement())
+  recipientId  Int
+  actorId      Int?
+  eventKey     String    @unique
+  type         String
+  title        String
+  body         String
+  resourceType String?
+  resourceId   Int?
+  actionPath   String?
+  payload      Json?
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  recipient User  @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, readAt, createdAt])
+  @@index([recipientId, createdAt])
+  @@index([resourceType, resourceId])
+  @@index([actorId])
 }
 
 model StudentProfile {
@@ -114,6 +143,7 @@ model Demand {
   applications Application[]
   conversation Conversation?
   trialLessons TrialLesson[]
+  order        Order?
 
   @@index([parentId, status])
   @@index([status, subject, region, publishedAt])
@@ -157,10 +187,40 @@ model Application {
   demand       Demand        @relation(fields: [demandId], references: [id], onDelete: Restrict)
   conversation Conversation?
   trialLessons TrialLesson[]
+  order        Order?
 
   @@unique([studentId, demandId])
   @@index([demandId, status, createdAt])
   @@index([studentId, status, createdAt])
+}
+
+model Order {
+  id                 Int       @id @default(autoincrement())
+  parentId           Int
+  studentId          Int
+  demandId           Int       @unique
+  applicationId      Int       @unique
+  totalAmount        Int?
+  platformFee        Int?
+  currency           String    @default("CNY")
+  status             String    @default("PENDING")
+  confirmedAt        DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  parent       User          @relation("ParentOrders", fields: [parentId], references: [id], onDelete: Restrict)
+  student      User          @relation("StudentOrders", fields: [studentId], references: [id], onDelete: Restrict)
+  demand       Demand        @relation(fields: [demandId], references: [id], onDelete: Restrict)
+  application  Application   @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  trialLessons TrialLesson[]
+
+  @@index([parentId, status, createdAt])
+  @@index([studentId, status, createdAt])
+  @@index([status, createdAt])
 }
 
 model Conversation {
@@ -208,6 +268,7 @@ model Message {
 model TrialLesson {
   id                 Int       @id @default(autoincrement())
   applicationId      Int
+  orderId            Int?
   demandId           Int
   parentId           Int
   studentId          Int
@@ -225,6 +286,7 @@ model TrialLesson {
   updatedAt          DateTime  @updatedAt
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  order       Order?      @relation(fields: [orderId], references: [id], onDelete: Restrict)
   demand      Demand      @relation(fields: [demandId], references: [id], onDelete: Restrict)
   parent      User        @relation("ParentTrialLessons", fields: [parentId], references: [id], onDelete: Restrict)
   student     User        @relation("StudentTrialLessons", fields: [studentId], references: [id], onDelete: Restrict)
@@ -232,6 +294,7 @@ model TrialLesson {
   reviews     Review[]
 
   @@index([applicationId, status])
+  @@index([orderId, status])
   @@index([demandId])
   @@index([parentId, status, scheduledStartAt])
   @@index([studentId, status, scheduledStartAt])

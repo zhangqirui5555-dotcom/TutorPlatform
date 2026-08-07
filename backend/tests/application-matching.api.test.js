@@ -63,7 +63,7 @@ async function login(email, password = "Test123456!") {
   return response.body
 }
 
-async function createRecruitingDemand(parentToken, marker) {
+async function createRecruitingDemand(parentToken, adminToken, marker) {
   const created = await request("/api/v1/demands", {
     method: "POST",
     token: parentToken,
@@ -87,7 +87,22 @@ async function createRecruitingDemand(parentToken, marker) {
   assert.equal(published.status, 200)
   assert.equal(published.body.demand.status, "RECRUITING")
 
-  return published.body.demand
+  const listed = await request(
+    `/api/v1/admin/demands/${published.body.demand.id}/visibility`,
+    {
+      method: "PATCH",
+      token: adminToken,
+      body: JSON.stringify({
+        visibility_status: "VISIBLE",
+        public_summary: "已通过审核的申请流程测试需求",
+        reason: "集成测试上架",
+      }),
+    },
+  )
+  assert.equal(listed.status, 200)
+  assert.equal(listed.body.demand.visibility_status, "VISIBLE")
+
+  return listed.body.demand
 }
 
 async function ensureStudentIsApproved(studentToken, adminToken, studentEmail, marker) {
@@ -143,7 +158,7 @@ test("student application and parent matching workflow", async () => {
     login("admin@test.com"),
   ])
 
-  const demand = await createRecruitingDemand(parent.token, marker)
+  const demand = await createRecruitingDemand(parent.token, admin.token, marker)
 
   const unverifiedEmail = `unverified.${marker}@test.com`
   const unverifiedPassword = "Unverified123!"
@@ -254,11 +269,13 @@ test("student application and parent matching workflow", async () => {
   assert.equal(accepted.body.application.status, "ACCEPTED")
   assert.equal(accepted.body.application.demand.status, "MATCHED")
   assert.equal(accepted.body.conversation.status, "ACTIVE")
+  assert.equal(accepted.body.order.status, "PENDING")
 
-  const [databaseApplication, databaseDemand, conversation] = await Promise.all([
+  const [databaseApplication, databaseDemand, conversation, order] = await Promise.all([
     prisma.application.findUnique({ where: { id: applicationId } }),
     prisma.demand.findUnique({ where: { id: demand.id } }),
     prisma.conversation.findUnique({ where: { applicationId } }),
+    prisma.order.findUnique({ where: { applicationId } }),
   ])
 
   assert.equal(databaseApplication.status, "ACCEPTED")
@@ -267,6 +284,24 @@ test("student application and parent matching workflow", async () => {
   assert.equal(conversation.demandId, demand.id)
   assert.equal(conversation.parentId, parent.user.id)
   assert.equal(conversation.studentId, student.user.id)
+  assert.equal(order.applicationId, applicationId)
+  assert.equal(order.demandId, demand.id)
+  assert.equal(order.parentId, parent.user.id)
+  assert.equal(order.studentId, student.user.id)
+  assert.equal(order.status, "PENDING")
+
+  const repeatedAccept = await request(`/api/v1/applications/${applicationId}/accept`, {
+    method: "POST",
+    token: parent.token,
+  })
+  assert.equal(repeatedAccept.status, 200)
+  assert.equal(repeatedAccept.body.application.status, "ACCEPTED")
+  assert.equal(repeatedAccept.body.conversation.id, conversation.id)
+  assert.equal(repeatedAccept.body.order.id, order.id)
+  assert.equal(
+    await prisma.order.count({ where: { applicationId } }),
+    1,
+  )
 
   const competingApplication = await prisma.application.findUnique({
     where: { id: competingApplicationId },
@@ -274,7 +309,46 @@ test("student application and parent matching workflow", async () => {
   assert.equal(competingApplication.status, "REJECTED")
   assert.ok(competingApplication.decidedAt)
 
-  const rejectDemand = await createRecruitingDemand(parent.token, `${marker}-reject`)
+  const applicationNotifications = await prisma.notification.findMany({
+    where: {
+      eventKey: {
+        in: [
+          `APPLICATION_RECEIVED:${competingApplicationId}`,
+          `APPLICATION_RECEIVED:${applicationId}`,
+          `APPLICATION_ACCEPTED:${applicationId}`,
+          `APPLICATION_REJECTED:${competingApplicationId}`,
+        ],
+      },
+    },
+  })
+  assert.equal(applicationNotifications.length, 4)
+  assert.equal(
+    applicationNotifications.find(
+      (notification) => notification.eventKey ===
+        `APPLICATION_RECEIVED:${applicationId}`,
+    ).recipientId,
+    parent.user.id,
+  )
+  assert.equal(
+    applicationNotifications.find(
+      (notification) => notification.eventKey ===
+        `APPLICATION_ACCEPTED:${applicationId}`,
+    ).recipientId,
+    student.user.id,
+  )
+  assert.equal(
+    applicationNotifications.find(
+      (notification) => notification.eventKey ===
+        `APPLICATION_REJECTED:${competingApplicationId}`,
+    ).recipientId,
+    registered.body.user.id,
+  )
+
+  const rejectDemand = await createRecruitingDemand(
+    parent.token,
+    admin.token,
+    `${marker}-reject`,
+  )
   const rejectSubmission = await request(
     `/api/v1/demands/${rejectDemand.id}/applications`,
     {
@@ -296,4 +370,39 @@ test("student application and parent matching workflow", async () => {
   )
   assert.equal(rejected.status, 200)
   assert.equal(rejected.body.application.status, "REJECTED")
+
+  const manualRejectionEventKey =
+    `APPLICATION_REJECTED:${rejectSubmission.body.application.id}`
+  const manualRejectionNotification = await prisma.notification.findUnique({
+    where: { eventKey: manualRejectionEventKey },
+  })
+  assert.equal(manualRejectionNotification.recipientId, student.user.id)
+  assert.equal(manualRejectionNotification.actorId, parent.user.id)
+  assert.equal(manualRejectionNotification.type, "APPLICATION_REJECTED")
+  assert.equal(manualRejectionNotification.actionPath, "/student/applications")
+
+  const repeatedReject = await request(
+    `/api/v1/applications/${rejectSubmission.body.application.id}/reject`,
+    {
+      method: "POST",
+      token: parent.token,
+    },
+  )
+  assert.equal(repeatedReject.status, 409)
+  assert.equal(repeatedReject.body.error.code, "INVALID_APPLICATION_STATUS")
+  assert.equal(
+    await prisma.notification.count({
+      where: { eventKey: manualRejectionEventKey },
+    }),
+    1,
+  )
+
+  const studentCannotReject = await request(
+    `/api/v1/applications/${rejectSubmission.body.application.id}/reject`,
+    {
+      method: "POST",
+      token: student.token,
+    },
+  )
+  assert.equal(studentCannotReject.status, 403)
 })

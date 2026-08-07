@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client")
+const notificationService = require("./notificationService")
 const AppError = require("../utils/AppError")
 const toConversationResponse = require("../utils/conversationResponse")
 const toMessageResponse = require("../utils/messageResponse")
@@ -145,27 +146,56 @@ async function sendMessage(userId, conversationIdInput, input) {
       data: { lastMessageAt: sentAt },
     })
 
+    await notificationService.upsertConversationUnreadNotification(transaction, {
+      recipientId: receiverId,
+      actorId: userId,
+      eventKey: `MESSAGE_UNREAD:${conversation.id}:${receiverId}`,
+      type: "MESSAGE_RECEIVED",
+      title: "New message",
+      body: "You received a new message.",
+      resourceType: "CONVERSATION",
+      resourceId: conversation.id,
+      actionPath: receiverId === conversation.parentId
+        ? "/parent/messages"
+        : "/student/messages",
+      payload: {
+        conversation_id: conversation.id,
+        sender_id: userId,
+        latest_message_id: message.id,
+      },
+    })
+
     return toMessageResponse(message)
   })
 }
 
 async function markRead(userId, conversationIdInput) {
   const conversationId = requireConversationId(conversationIdInput)
-  await getConversation(conversationId, userId)
-  const readAt = new Date()
-  const result = await prisma.message.updateMany({
-    where: {
-      conversationId,
-      receiverId: userId,
-      readAt: null,
-    },
-    data: { readAt },
-  })
 
-  return {
-    updated_count: result.count,
-    read_at: readAt,
-  }
+  return prisma.$transaction(async (transaction) => {
+    await getConversation(conversationId, userId, transaction)
+    const readAt = new Date()
+    const result = await transaction.message.updateMany({
+      where: {
+        conversationId,
+        receiverId: userId,
+        readAt: null,
+      },
+      data: { readAt },
+    })
+
+    await notificationService.markConversationUnreadNotificationRead(
+      transaction,
+      conversationId,
+      userId,
+      readAt,
+    )
+
+    return {
+      updated_count: result.count,
+      read_at: readAt,
+    }
+  })
 }
 
 module.exports = {

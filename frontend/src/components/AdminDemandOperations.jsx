@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import {
+  adminDemandOperationAvailability,
+  isAdminDemandOperationAllowed,
+} from '../utils/adminDemandOperations.js'
 
 const LABELS = { list: '上架', unlist: '下架', feature: '推荐', unfeature: '取消推荐', expiry: '调整有效期' }
 const initial = { public_summary: '', expires_at: '', reason: '', sort_weight: '0', featured_at: '', featured_until: '' }
@@ -16,6 +20,9 @@ function AdminDemandOperations({ demand, onSubmit }) {
   async function submit(e) {
     e.preventDefault(); setError('')
     const now = Date.now()
+    if (!isAdminDemandOperationAllowed(demand, action)) {
+      return setError('当前需求状态已变化，请刷新后重试。')
+    }
     if (!form.reason.trim()) return setError('请填写操作原因。')
     const data = { reason: form.reason.trim() }
     if (action === 'list') {
@@ -42,12 +49,20 @@ function AdminDemandOperations({ demand, onSubmit }) {
     try { await onSubmit(action, data); setAction('') } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
 
+  const availability = adminDemandOperationAvailability(demand)
+
   return <>
-    <div className="admin-demand-actions">
-      {demand.visibility_status === 'VISIBLE' ? <button onClick={() => open('unlist')} type="button">下架</button> : <button onClick={() => open('list')} type="button">上架</button>}
-      {demand.is_featured ? <button onClick={() => open('unfeature')} type="button">取消推荐</button> : <button onClick={() => open('feature')} type="button">推荐</button>}
-      <button onClick={() => open('expiry')} type="button">调整有效期</button>
-    </div>
+    {(availability.canList
+      || availability.canUnlist
+      || availability.canFeature
+      || availability.canUnfeature
+      || availability.canAdjustExpiry) && <div className="admin-demand-actions">
+      {availability.canList && <button onClick={() => open('list')} type="button">上架</button>}
+      {availability.canUnlist && <button onClick={() => open('unlist')} type="button">下架</button>}
+      {availability.canFeature && <button onClick={() => open('feature')} type="button">推荐</button>}
+      {availability.canUnfeature && <button onClick={() => open('unfeature')} type="button">取消推荐</button>}
+      {availability.canAdjustExpiry && <button onClick={() => open('expiry')} type="button">调整有效期</button>}
+    </div>}
     {action && <div className="admin-demand-modal" onMouseDown={(e) => e.target === e.currentTarget && close()} role="presentation"><section aria-labelledby="operation-title" aria-modal="true" className="admin-demand-dialog" role="dialog"><div className="dialog-heading"><h2 id="operation-title">{LABELS[action]}需求</h2><button aria-label="关闭" onClick={close} type="button">×</button></div><form onSubmit={submit}>
       {action === 'list' && <><label>公开摘要（最多 300 字）<textarea maxLength="300" name="public_summary" onChange={update} required value={form.public_summary} /></label><label>有效期（不填则使用系统默认值）<input min={new Date().toISOString().slice(0,16)} name="expires_at" onChange={update} type="datetime-local" value={form.expires_at} /></label></>}
       {action === 'feature' && <><label>排序权重（0–10000）<input max="10000" min="0" name="sort_weight" onChange={update} required step="1" type="number" value={form.sort_weight} /></label><label>推荐开始时间（不填则立即开始）<input name="featured_at" onChange={update} type="datetime-local" value={form.featured_at} /></label><label>推荐截止时间<input name="featured_until" onChange={update} required type="datetime-local" value={form.featured_until} /></label></>}

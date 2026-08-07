@@ -13,6 +13,13 @@ import AdminDemandOperations from '../components/AdminDemandOperations.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ErrorAlert from '../components/ErrorAlert.jsx'
 import LoadingState from '../components/LoadingState.jsx'
+import {
+  adminDemandErrorMessage,
+  adminDemandPublicStatusLabel,
+  adminDemandStatusLabel,
+  isAdminDemandEffectivelyFeatured,
+  isAdminDemandPubliclyVisible,
+} from '../utils/adminDemandOperations.js'
 import '../styles/adminDemand.css'
 
 const EMPTY_FILTERS = {
@@ -25,24 +32,7 @@ const EMPTY_FILTERS = {
   expired: '',
 }
 
-const STATUS_LABELS = {
-  DRAFT: '草稿',
-  RECRUITING: '招募中',
-  MATCHED: '已匹配',
-  COMPLETED: '已完成',
-  CLOSED: '已关闭',
-}
-
 const formatDate = (value) => value ? new Date(value).toLocaleString('zh-CN') : '—'
-
-function messageFor(error) {
-  const status = error.response?.status
-  const backend = error.response?.data?.error?.message || error.response?.data?.message
-  if (status === 404) return backend || '需求不存在或已被删除。'
-  if (status === 409) return backend || '当前需求状态不允许执行该操作。'
-  if (status === 403) return '你没有需求运营权限。'
-  return backend || error.message || '请求失败，请稍后重试。'
-}
 
 function DesktopDemandTable({ demands, onOpenLogs, onOperate }) {
   return (
@@ -61,11 +51,11 @@ function DesktopDemandTable({ demands, onOpenLogs, onOperate }) {
                 <small>ID: {demand.id}</small>
               </td>
               <td>
-                <span>{STATUS_LABELS[demand.status] || demand.status}</span>
-                <span className={`status-chip ${demand.visibility_status === 'VISIBLE' ? 'is-visible' : ''}`}>
-                  {demand.visibility_status === 'VISIBLE' ? '已上架' : '已下架'}
+                <span>{adminDemandStatusLabel(demand.status)}</span>
+                <span className={`status-chip ${isAdminDemandPubliclyVisible(demand) ? 'is-visible' : ''}`}>
+                  {adminDemandPublicStatusLabel(demand)}
                 </span>
-                {demand.is_featured && <span className="status-chip is-featured">推荐</span>}
+                {isAdminDemandEffectivelyFeatured(demand) && <span className="status-chip is-featured">推荐</span>}
               </td>
               <td>
                 <span>权重：{demand.sort_weight}</span>
@@ -119,7 +109,7 @@ function AdminDemandPage() {
       setDemands(data.demands)
       setPagination(data.pagination)
     } catch (err) {
-      setError(messageFor(err))
+      setError(adminDemandErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -152,7 +142,7 @@ function AdminDemandPage() {
       setSuccess(`“${demand.title}”操作成功。`)
       await load()
     } catch (err) {
-      throw new Error(messageFor(err))
+      throw new Error(adminDemandErrorMessage(err))
     }
   }
 

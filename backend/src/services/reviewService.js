@@ -6,7 +6,6 @@ const REVIEW_INCLUDE = {
   reviewer: {
     select: {
       id: true,
-      email: true,
       displayName: true,
       role: true,
     },
@@ -14,7 +13,6 @@ const REVIEW_INCLUDE = {
   reviewee: {
     select: {
       id: true,
-      email: true,
       displayName: true,
       role: true,
     },

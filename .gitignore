@@ -15,10 +15,15 @@ dist-ssr/
 **/dist-ssr/
 
 # SQLite development databases
+*.db
+*.db-*
 dev.db
 dev.db-*
 **/dev.db
 **/dev.db-*
+
+# Local release archives
+TutorPlatform.zip
 
 # Logs and local tooling
 *.log

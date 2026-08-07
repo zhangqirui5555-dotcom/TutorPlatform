@@ -10,6 +10,35 @@ let baseUrl
 let fixture
 let server
 
+const FORBIDDEN_REVIEW_KEYS = new Set([
+  "email",
+  "phone",
+  "wechat",
+  "address",
+  "addressdetail",
+  "password",
+  "passwordhash",
+])
+
+function assertNoSensitiveReviewKeys(value) {
+  if (Array.isArray(value)) {
+    value.forEach(assertNoSensitiveReviewKeys)
+    return
+  }
+
+  if (!value || typeof value !== "object") return
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    const normalizedKey = key.replaceAll("_", "").toLowerCase()
+    assert.equal(
+      FORBIDDEN_REVIEW_KEYS.has(normalizedKey),
+      false,
+      `Review response exposed forbidden key: ${key}`,
+    )
+    assertNoSensitiveReviewKeys(nestedValue)
+  }
+}
+
 before(async () => {
   const [parent, student] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { email: "parent@test.com" } }),
@@ -228,9 +257,11 @@ test("completed trial lesson participants can review each other", async () => {
     token: student.token,
   })
   assert.equal(parentReceived.status, 200)
+  assertNoSensitiveReviewKeys(parentReceived.body)
   assert.ok(
     parentReceived.body.reviews.some(
-      (review) => review.id === studentReview.body.review.id,
+      (review) => review.id === studentReview.body.review.id &&
+        review.content === "家长沟通顺畅",
     ),
   )
 
@@ -238,9 +269,11 @@ test("completed trial lesson participants can review each other", async () => {
     token: parent.token,
   })
   assert.equal(studentReceived.status, 200)
+  assertNoSensitiveReviewKeys(studentReceived.body)
   assert.ok(
     studentReceived.body.reviews.some(
-      (review) => review.id === parentReview.body.review.id,
+      (review) => review.id === parentReview.body.review.id &&
+        review.content === "学生讲解清晰",
     ),
   )
 

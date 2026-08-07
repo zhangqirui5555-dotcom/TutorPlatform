@@ -1,5 +1,6 @@
 const prisma = require("../prisma/client")
 const AppError = require("../utils/AppError")
+const availableDemandWhere = require("../utils/demandAvailability")
 const toDemandResponse = require("../utils/demandResponse")
 
 const REQUIRED_TEXT_FIELDS = [
@@ -109,7 +110,7 @@ async function getMyDemands(parentId) {
 
 async function getPublicDemands({ subject, region }) {
   const where = {
-    status: "RECRUITING",
+    ...availableDemandWhere(new Date()),
   }
 
   if (subject !== undefined) {
@@ -135,8 +136,14 @@ async function getDemandDetail(demandIdInput, userId) {
     throw new AppError(400, "INVALID_DEMAND_ID", "Demand ID must be a positive integer")
   }
 
-  const demand = await prisma.demand.findUnique({
-    where: { id: demandId },
+  const demand = await prisma.demand.findFirst({
+    where: {
+      id: demandId,
+      OR: [
+        { parentId: userId },
+        availableDemandWhere(new Date()),
+      ],
+    },
   })
 
   if (!demand) {

@@ -118,7 +118,7 @@ test("demand creation enforces parent role and budget rules", async () => {
 })
 
 test("parent can create, query, publish, and close a demand", async () => {
-  const [login, studentLogin] = await Promise.all([
+  const [login, studentLogin, adminLogin] = await Promise.all([
     request("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({
@@ -133,10 +133,18 @@ test("parent can create, query, publish, and close a demand", async () => {
         password: "Test123456!",
       }),
     }),
+    request("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "admin@test.com",
+        password: "Test123456!",
+      }),
+    }),
   ])
 
   assert.equal(login.status, 200)
   assert.equal(studentLogin.status, 200)
+  assert.equal(adminLogin.status, 200)
   assert.ok(login.body.token)
 
   const token = login.body.token
@@ -185,6 +193,18 @@ test("parent can create, query, publish, and close a demand", async () => {
   })
   assert.equal(published.status, 200)
   assert.equal(published.body.demand.status, "RECRUITING")
+
+  const listed = await request(`/api/v1/admin/demands/${demandId}/visibility`, {
+    method: "PATCH",
+    token: adminLogin.body.token,
+    body: JSON.stringify({
+      visibility_status: "VISIBLE",
+      public_summary: "已通过审核的测试需求",
+      reason: "集成测试上架",
+    }),
+  })
+  assert.equal(listed.status, 200)
+  assert.equal(listed.body.demand.visibility_status, "VISIBLE")
 
   const studentDetail = await request(`/api/v1/demands/${demandId}`, {
     token: studentLogin.body.token,

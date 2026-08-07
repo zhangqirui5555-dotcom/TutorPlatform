@@ -1,5 +1,6 @@
 const prisma = require("../prisma/client")
 const AppError = require("../utils/AppError")
+const availableDemandWhere = require("../utils/demandAvailability")
 const toPublicDemandResponse = require("../utils/publicDemandResponse")
 
 const DEFAULT_PAGE_SIZE = 20
@@ -51,23 +52,6 @@ function positiveInteger(value, fallback, maximum, fieldName) {
   return parsed
 }
 
-function publicVisibilityWhere(now) {
-  return {
-    status: "RECRUITING",
-    visibilityStatus: "VISIBLE",
-    parent: {
-      is: {
-        role: "PARENT",
-        status: "ACTIVE",
-      },
-    },
-    OR: [
-      { expiresAt: null },
-      { expiresAt: { gt: now } },
-    ],
-  }
-}
-
 function parseListOptions({ subject, region, page, page_size: pageSize }) {
   const parsedPage = positiveInteger(page, 1, Number.MAX_SAFE_INTEGER, "page")
   const parsedPageSize = positiveInteger(
@@ -88,7 +72,7 @@ function parseListOptions({ subject, region, page, page_size: pageSize }) {
 async function getPublicDemands(query = {}) {
   const { page, pageSize, region, subject } = parseListOptions(query)
   const where = {
-    ...publicVisibilityWhere(new Date()),
+    ...availableDemandWhere(new Date()),
     ...(subject ? { subject } : {}),
     ...(region ? { region } : {}),
   }
@@ -115,7 +99,7 @@ async function getFeaturedDemands(query = {}) {
   const { page, pageSize, region, subject } = parseListOptions(query)
   const now = new Date()
   const where = {
-    ...publicVisibilityWhere(now),
+    ...availableDemandWhere(now),
     isFeatured: true,
     AND: [
       {
@@ -162,7 +146,7 @@ async function getPublicDemandDetail(demandIdInput) {
   const demand = await prisma.demand.findFirst({
     where: {
       id: demandId,
-      ...publicVisibilityWhere(new Date()),
+      ...availableDemandWhere(new Date()),
     },
     select: PUBLIC_DEMAND_SELECT,
   })

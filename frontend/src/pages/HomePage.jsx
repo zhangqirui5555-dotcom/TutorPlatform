@@ -60,7 +60,7 @@ function HomePage() {
     <div className="home-page">
       <section className="home-hero">
         <div className="hero-copy">
-          <p className="eyebrow">TutorPlatform · Demo V1.0</p>
+          <p className="eyebrow">TutorPlatform</p>
           <h1>找到合适的老师，<br /><span>让学习更进一步。</span></h1>
           <p className="hero-lead">
             连接有真实辅导需求的家庭与经过认证的大学生，

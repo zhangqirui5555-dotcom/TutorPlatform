@@ -147,7 +147,7 @@ function StudentProfilePage() {
         <form className="demand-form" onSubmit={handleSubmit}>
           <label>
             <span>学校</span>
-            <input name="school" onChange={updateField} placeholder="例如：Demo大学" required value={form.school} />
+            <input name="school" onChange={updateField} placeholder="请输入学校名称" required value={form.school} />
           </label>
           <label>
             <span>专业</span>

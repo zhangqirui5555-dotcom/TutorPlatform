@@ -27,6 +27,10 @@ TutorPlatform.zip
 
 # Logs and local tooling
 *.log
+storage-migration-manifest*.json
+storage-migration-checkpoint*.json
+storage-migration-report*.json
+storage-migration-*.json.*.tmp
 .DS_Store
 .idea/
 .vscode/

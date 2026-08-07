@@ -10,6 +10,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "storage:migration": "node src/tools/storage-migration/cli.js",
     "test:application": "node --test tests/application-matching.api.test.js",
     "test:conversation": "node --test tests/conversation-message.api.test.js",
     "test:demand": "node --test tests/demand.api.test.js",

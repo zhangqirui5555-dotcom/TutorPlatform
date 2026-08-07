@@ -25,6 +25,12 @@ const MODULES = [
     description: '维护平台内容与撮合秩序。',
     to: '/admin/governance',
   },
+  {
+    icon: '订',
+    title: '订单管理',
+    description: '查看平台订单、参与双方和当前履约状态。',
+    to: '/admin/orders',
+  },
 ]
 
 function AdminDashboardPage() {

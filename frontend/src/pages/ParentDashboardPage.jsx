@@ -31,6 +31,12 @@ const MODULES = [
     description: '评价已完成的试课并查看收到的反馈。',
     to: '/parent/reviews',
   },
+  {
+    icon: '订',
+    title: '我的订单',
+    description: '确认服务金额并跟进服务、试课和完成状态。',
+    to: '/parent/orders',
+  },
 ]
 
 function ParentDashboardPage() {

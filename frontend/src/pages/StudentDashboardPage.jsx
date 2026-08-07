@@ -37,6 +37,12 @@ const MODULES = [
     description: '评价已完成的试课并查看收到的反馈。',
     to: '/student/reviews',
   },
+  {
+    icon: '订',
+    title: '我的订单',
+    description: '确认订单条款并跟进沟通、试课和服务状态。',
+    to: '/student/orders',
+  },
 ]
 
 function StudentDashboardPage() {

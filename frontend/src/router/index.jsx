@@ -10,6 +10,9 @@ import AdminUserPage from '../pages/AdminUserPage.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
+import NotificationPage from '../pages/NotificationPage.jsx'
+import OrderDetailPage from '../pages/OrderDetailPage.jsx'
+import OrderListPage from '../pages/OrderListPage.jsx'
 import ParentApplicationPage from '../pages/ParentApplicationPage.jsx'
 import ParentApplicationOverviewPage from '../pages/ParentApplicationOverviewPage.jsx'
 import ParentDashboardPage from '../pages/ParentDashboardPage.jsx'
@@ -100,10 +103,34 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'notifications',
+        element: (
+          <ProtectedRoute>
+            <NotificationPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'parent/messages',
         element: (
           <RoleRoute allowedRole="PARENT">
             <ParentMessagePage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'parent/orders',
+        element: (
+          <RoleRoute allowedRole="PARENT">
+            <OrderListPage role="PARENT" />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'parent/orders/:id',
+        element: (
+          <RoleRoute allowedRole="PARENT">
+            <OrderDetailPage role="PARENT" />
           </RoleRoute>
         ),
       },
@@ -180,6 +207,22 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'student/orders',
+        element: (
+          <RoleRoute allowedRole="STUDENT">
+            <OrderListPage role="STUDENT" />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'student/orders/:id',
+        element: (
+          <RoleRoute allowedRole="STUDENT">
+            <OrderDetailPage role="STUDENT" />
+          </RoleRoute>
+        ),
+      },
+      {
         path: 'student/trial-lessons',
         element: (
           <RoleRoute allowedRole="STUDENT">
@@ -232,6 +275,22 @@ const router = createBrowserRouter([
         element: (
           <RoleRoute allowedRole="ADMIN">
             <AdminGovernancePage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'admin/orders',
+        element: (
+          <RoleRoute allowedRole="ADMIN">
+            <OrderListPage role="ADMIN" />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'admin/orders/:id',
+        element: (
+          <RoleRoute allowedRole="ADMIN">
+            <OrderDetailPage role="ADMIN" />
           </RoleRoute>
         ),
       },

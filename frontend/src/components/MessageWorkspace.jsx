@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   getConversations,
   getMessages,
   markRead,
   sendMessage,
 } from '../api/conversation.js'
+import useNotification from '../contexts/useNotification.js'
 import { getUser } from '../utils/auth.js'
 import EmptyState from './EmptyState.jsx'
 import ErrorAlert from './ErrorAlert.jsx'
@@ -25,6 +27,14 @@ function formatTime(value) {
 
 function MessageWorkspace({ eyebrow, title }) {
   const user = getUser()
+  const [searchParams] = useSearchParams()
+  const { refreshUnreadCount } = useNotification()
+  const handledConversationParam = useRef(null)
+  const requestedConversationIdValue = Number(searchParams.get('conversation_id'))
+  const requestedConversationId = Number.isSafeInteger(requestedConversationIdValue)
+    && requestedConversationIdValue > 0
+    ? requestedConversationIdValue
+    : null
   const [conversations, setConversations] = useState([])
   const [activeConversationId, setActiveConversationId] = useState(null)
   const [messages, setMessages] = useState([])
@@ -43,6 +53,7 @@ function MessageWorkspace({ eyebrow, title }) {
       const readResult = await markRead(conversationId)
       if (readResult.updated_count > 0) {
         result = await getMessages(conversationId)
+        refreshUnreadCount()
       }
       setMessages(result)
     } catch (requestError) {
@@ -51,7 +62,7 @@ function MessageWorkspace({ eyebrow, title }) {
           '消息加载失败，请稍后重试。',
       )
     }
-  }, [])
+  }, [refreshUnreadCount])
 
   const loadConversations = useCallback(async () => {
     setError('')
@@ -59,6 +70,20 @@ function MessageWorkspace({ eyebrow, title }) {
     try {
       const result = await getConversations()
       setConversations(result)
+
+      const parameterKey = searchParams.get('conversation_id') || ''
+      if (handledConversationParam.current !== parameterKey) {
+        handledConversationParam.current = parameterKey
+        if (
+          requestedConversationId
+          && result.some((item) => item.id === requestedConversationId)
+        ) {
+          setActiveConversationId(requestedConversationId)
+          setIsMobileChatOpen(true)
+          return
+        }
+      }
+
       setActiveConversationId((currentId) => {
         const nextId =
           currentId && result.some((item) => item.id === currentId)
@@ -74,7 +99,7 @@ function MessageWorkspace({ eyebrow, title }) {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [requestedConversationId, searchParams])
 
   useEffect(() => {
     loadConversations()

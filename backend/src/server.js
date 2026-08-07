@@ -1,5 +1,9 @@
 require("dotenv").config()
 
+const { getStorageAdapter } = require("./storage")
+
+getStorageAdapter()
+
 const app = require("./app")
 const prisma = require("./prisma/client")
 

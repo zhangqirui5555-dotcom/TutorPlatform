@@ -1,52 +1,13 @@
 const certificationService = require("../services/certificationService")
-const crypto = require("node:crypto")
-const fs = require("node:fs/promises")
-const path = require("node:path")
-const AppError = require("../utils/AppError")
-
-const MATERIAL_TYPES = {
-  "application/pdf": { extension: ".pdf", type: "STUDENT_CERTIFICATE" },
-  "image/jpeg": { extension: ".jpg", type: "STUDENT_CERTIFICATE" },
-  "image/png": { extension: ".png", type: "STUDENT_CERTIFICATE" },
-}
-const MAX_FILE_SIZE = 1024 * 1024
+const certificationMaterialService = require("../services/certificationMaterialService")
+const { pipeline } = require("node:stream/promises")
 
 async function uploadCertification(req, res) {
-  const { data_base64: dataBase64, mime_type: mimeType } = req.body || {}
-  const material = MATERIAL_TYPES[mimeType]
-
-  if (!material || typeof dataBase64 !== "string" || !dataBase64) {
-    throw new AppError(
-      400,
-      "INVALID_CERTIFICATION_FILE",
-      "Only JPG, PNG, or PDF certification files are supported",
-    )
-  }
-
-  const buffer = Buffer.from(dataBase64, "base64")
-  if (!buffer.length || buffer.length > MAX_FILE_SIZE) {
-    throw new AppError(
-      400,
-      "INVALID_CERTIFICATION_FILE_SIZE",
-      "Certification file must not exceed 1 MB",
-    )
-  }
-
-  const relativePath = `uploads/certifications/${req.user.id}/${crypto.randomUUID()}${material.extension}`
-  const absolutePath = path.join(__dirname, "..", "..", relativePath)
-  await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, buffer)
-
-  try {
-    const certification = await certificationService.submitCertification(req.user.id, {
-      material_path: relativePath,
-      material_type: material.type,
-    })
-    res.status(201).json({ certification })
-  } catch (error) {
-    await fs.rm(absolutePath, { force: true })
-    throw error
-  }
+  const certification = await certificationMaterialService.uploadCertification(
+    req.user.id,
+    req.body || {},
+  )
+  res.status(201).json({ certification })
 }
 
 async function submitCertification(req, res) {
@@ -62,30 +23,29 @@ async function getMyCertifications(req, res) {
   res.json(result)
 }
 
-async function sendCertificationMaterial(certification, res) {
-  const absolutePath = path.join(
-    __dirname,
-    "..",
-    "..",
-    certification.materialPath,
-  )
-  await fs.access(absolutePath)
-  res.sendFile(absolutePath)
+async function sendCertificationMaterial(material, res) {
+  res.setHeader("Content-Type", material.contentType)
+  if (Number.isInteger(material.contentLength)) {
+    res.setHeader("Content-Length", String(material.contentLength))
+  }
+  res.setHeader("Cache-Control", "private, no-store")
+  res.setHeader("X-Content-Type-Options", "nosniff")
+  await pipeline(material.stream, res)
 }
 
 async function getMyCertificationMaterial(req, res) {
-  const certification = await certificationService.getCertificationMaterial(
+  const { material } = await certificationMaterialService.getCertificationMaterial(
     Number(req.params.id),
     req.user.id,
   )
-  await sendCertificationMaterial(certification, res)
+  await sendCertificationMaterial(material, res)
 }
 
 async function getCertificationMaterialForAdmin(req, res) {
-  const certification = await certificationService.getCertificationMaterial(
+  const { material } = await certificationMaterialService.getCertificationMaterial(
     Number(req.params.id),
   )
-  await sendCertificationMaterial(certification, res)
+  await sendCertificationMaterial(material, res)
 }
 
 async function getPendingCertifications(req, res) {

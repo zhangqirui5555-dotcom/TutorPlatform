@@ -1,6 +1,5 @@
-const path = require("node:path")
-
 const prisma = require("../prisma/client")
+const { normalizeStorageKey } = require("../storage/storageKey")
 const AppError = require("../utils/AppError")
 const toCertificationResponse = require("../utils/certificationResponse")
 
@@ -9,13 +8,18 @@ function validateMaterialPath(value) {
     throw new AppError(400, "INVALID_MATERIAL_PATH", "material_path is required")
   }
 
-  const normalized = value.trim().replaceAll("\\", "/")
+  let normalized
+  try {
+    normalized = normalizeStorageKey(value)
+  } catch {
+    throw new AppError(
+      400,
+      "INVALID_MATERIAL_PATH",
+      "material_path must be a relative path inside uploads/",
+    )
+  }
 
-  if (
-    path.posix.isAbsolute(normalized) ||
-    !normalized.startsWith("uploads/") ||
-    normalized.split("/").includes("..")
-  ) {
+  if (!normalized.startsWith("uploads/")) {
     throw new AppError(
       400,
       "INVALID_MATERIAL_PATH",

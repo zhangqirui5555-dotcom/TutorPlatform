@@ -1473,6 +1473,164 @@
   gap: 0.6rem;
 }
 
+.student-trust-profile {
+  display: grid;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #dce4f7;
+  border-radius: 0.85rem;
+  background: #fbfcff;
+}
+
+.student-trust-profile__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.student-trust-profile__heading h3,
+.student-trust-detail h4,
+.student-trust-detail p,
+.student-trust-verification p,
+.student-trust-review p {
+  margin: 0;
+}
+
+.student-trust-profile__heading h3,
+.student-trust-detail h4 {
+  color: var(--heading);
+  font-size: 0.92rem;
+}
+
+.student-trust-profile__eyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.student-trust-profile__privacy {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  color: #53627e;
+  background: #edf1fa;
+  font-size: 0.7rem;
+}
+
+.student-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.student-trust-field {
+  min-width: 0;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.65rem;
+  background: #f2f5fb;
+}
+
+.student-trust-field dt,
+.student-trust-verification span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.student-trust-field dd {
+  overflow-wrap: anywhere;
+  margin: 0.25rem 0 0;
+  color: var(--heading);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.student-trust-detail {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.student-trust-detail p,
+.student-trust-verification p,
+.student-trust-review p,
+.student-trust-muted {
+  overflow-wrap: anywhere;
+  color: #4d5d78;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.student-trust-verification {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.8rem;
+  border-left: 3px solid #3b65d4;
+  border-radius: 0 0.65rem 0.65rem 0;
+  background: #eef3ff;
+}
+
+.student-trust-verification strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: #24499d;
+  font-size: 0.86rem;
+}
+
+.student-trust-reviews {
+  display: grid;
+  gap: 0.65rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #dfe6f3;
+}
+
+.student-trust-rating {
+  flex: 0 0 auto;
+  color: #926100;
+  font-size: 0.78rem;
+}
+
+.student-trust-muted {
+  margin: 0;
+}
+
+.student-trust-review-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.student-trust-review {
+  padding: 0.7rem;
+  border: 1px solid #e0e5ef;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.student-trust-review > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.student-trust-review strong {
+  color: #bd7a00;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.student-trust-review time {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.student-trust-review p {
+  margin-top: 0.45rem;
+}
+
 .message-page {
   width: min(100%, 1120px);
 }
@@ -1744,6 +1902,15 @@
   border: 1px solid var(--border);
   border-radius: 1rem;
   background: var(--surface);
+}
+
+.trial-card.is-highlighted {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft), 0 14px 34px rgba(49, 87, 213, 0.12);
+}
+
+.trial-card.is-highlighted:focus {
+  outline: none;
 }
 
 .trial-card > header {
@@ -2188,6 +2355,15 @@
     grid-template-columns: 1fr;
   }
 
+  .student-trust-profile__heading,
+  .student-trust-review > div {
+    align-items: flex-start;
+  }
+
+  .student-trust-grid {
+    grid-template-columns: 1fr;
+  }
+
   .application-card-header {
     align-items: flex-start;
   }
@@ -2224,6 +2400,43 @@
   .admin-filter-bar,
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .candidate-card {
+    padding: 1rem;
+  }
+
+  .candidate-card > header {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .candidate-card > header .status-tag {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .candidate-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .candidate-actions .compact-button {
+    width: 100%;
+  }
+
+  .student-trust-profile {
+    padding: 0.85rem;
+  }
+
+  .student-trust-profile__heading {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .student-trust-profile__privacy,
+  .student-trust-rating {
+    align-self: flex-start;
   }
 }
 

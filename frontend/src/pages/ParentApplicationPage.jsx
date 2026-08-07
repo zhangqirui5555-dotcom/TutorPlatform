@@ -1,30 +1,104 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   acceptApplication,
   getDemandApplications,
   rejectApplication,
 } from '../api/application.js'
+import { getConversations } from '../api/conversation.js'
+import { getOrders } from '../api/order.js'
+import { getUserReviews } from '../api/review.js'
+import MatchSuccessDialog from '../components/MatchSuccessDialog.jsx'
+import StudentTrustProfile from '../components/StudentTrustProfile.jsx'
+import {
+  applicationResourceMap,
+  matchFlowPaths,
+  resourcesFromAcceptResult,
+} from '../utils/matchFlow.js'
+import '../styles/matchFlow.css'
 
 const STATUS_LABELS = {
-  ACCEPTED: '已接受',
+  ACCEPTED: '已匹配',
   PENDING: '待查看',
-  REJECTED: '已拒绝',
+  REJECTED: '未选择',
   VIEWED: '已查看',
 }
 
 function ParentApplicationPage() {
   const { id } = useParams()
   const [applications, setApplications] = useState([])
+  const [studentReviews, setStudentReviews] = useState({})
+  const [studentReviewStates, setStudentReviewStates] = useState({})
+  const [applicationResources, setApplicationResources] = useState({})
+  const [matchResult, setMatchResult] = useState(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
+  const reviewRequestRef = useRef(0)
+  const resourceRequestRef = useRef(0)
+
+  const loadAcceptedResources = useCallback(async (items) => {
+    const requestId = resourceRequestRef.current + 1
+    resourceRequestRef.current = requestId
+
+    if (!items.some((application) => application.status === 'ACCEPTED')) {
+      setApplicationResources({})
+      return
+    }
+
+    const [ordersResult, conversationsResult] = await Promise.allSettled([
+      getOrders({ page: 1, page_size: 50 }),
+      getConversations(),
+    ])
+    if (resourceRequestRef.current !== requestId) return
+
+    const orders = ordersResult.status === 'fulfilled'
+      ? ordersResult.value.orders || []
+      : []
+    const conversations = conversationsResult.status === 'fulfilled'
+      ? conversationsResult.value || []
+      : []
+    setApplicationResources(applicationResourceMap(items, orders, conversations))
+  }, [])
 
   const loadApplications = useCallback(async () => {
     setError('')
 
     try {
-      setApplications(await getDemandApplications(id))
+      const items = await getDemandApplications(id)
+      const studentIds = [...new Set(
+        items.map((application) => application.student?.id).filter(Boolean),
+      )]
+      const requestId = reviewRequestRef.current + 1
+      const loadingStates = Object.fromEntries(
+        studentIds.map((studentId) => [studentId, 'loading']),
+      )
+
+      reviewRequestRef.current = requestId
+      setApplications(items)
+      setStudentReviews({})
+      setStudentReviewStates(loadingStates)
+      void loadAcceptedResources(items)
+
+      void Promise.all(
+        studentIds.map(async (studentId) => {
+          try {
+            const reviews = await getUserReviews(studentId)
+            return [studentId, { reviews, state: 'ready' }]
+          } catch {
+            return [studentId, { reviews: [], state: 'unavailable' }]
+          }
+        }),
+      ).then((results) => {
+        if (reviewRequestRef.current !== requestId) return
+
+        setStudentReviews(Object.fromEntries(
+          results.map(([studentId, result]) => [studentId, result.reviews]),
+        ))
+        setStudentReviewStates(Object.fromEntries(
+          results.map(([studentId, result]) => [studentId, result.state]),
+        ))
+      })
     } catch (requestError) {
       setError(
         requestError.response?.data?.error?.message ||
@@ -33,19 +107,27 @@ function ParentApplicationPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [id])
+  }, [id, loadAcceptedResources])
 
   useEffect(() => {
     loadApplications()
   }, [loadApplications])
 
   async function handleDecision(applicationId, decision) {
+    if (updatingId) return
+
     setUpdatingId(applicationId)
     setError('')
 
     try {
       if (decision === 'accept') {
-        await acceptApplication(applicationId)
+        const result = await acceptApplication(applicationId)
+        const resources = resourcesFromAcceptResult(result)
+        setApplicationResources((current) => ({
+          ...current,
+          [applicationId]: resources,
+        }))
+        setMatchResult(result)
       } else {
         await rejectApplication(applicationId)
       }
@@ -61,7 +143,8 @@ function ParentApplicationPage() {
   }
 
   return (
-    <section className="application-workspace">
+    <>
+      <section className="application-workspace">
       <header className="workspace-header">
         <div>
           <p className="eyebrow">Parent · Applications</p>
@@ -90,7 +173,9 @@ function ParentApplicationPage() {
         <div className="candidate-grid">
           {applications.map((application) => {
             const profile = application.student?.profile
+            const studentId = application.student?.id
             const canDecide = ['PENDING', 'VIEWED'].includes(application.status)
+            const paths = matchFlowPaths(applicationResources[application.id], 'PARENT')
 
             return (
               <article className="candidate-card" key={application.id}>
@@ -116,11 +201,36 @@ function ParentApplicationPage() {
                   <p>{application.cover_message}</p>
                 </div>
 
+                <StudentTrustProfile
+                  reviews={studentReviews[studentId] || []}
+                  reviewState={studentReviewStates[studentId] || 'idle'}
+                  student={application.student}
+                />
+
+                {application.status === 'ACCEPTED' && (
+                  <div className="application-outcome application-outcome--matched">
+                    <strong>已匹配</strong>
+                    <p>双方现在可以确认订单、开始沟通并安排试课。</p>
+                    <div className="application-outcome__actions">
+                      <Link className="secondary-link-button" to={paths.order}>查看订单</Link>
+                      <Link className="secondary-link-button" to={paths.messages}>联系学生</Link>
+                      <Link className="secondary-link-button" to={paths.trials}>查看试课</Link>
+                    </div>
+                  </div>
+                )}
+
+                {application.status === 'REJECTED' && (
+                  <div className="application-outcome application-outcome--not-selected">
+                    <strong>本次未选择</strong>
+                    <p>该申请已处理，无需继续操作。</p>
+                  </div>
+                )}
+
                 {canDecide && (
                   <div className="candidate-actions">
                     <button
                       className="secondary-button compact-button"
-                      disabled={updatingId === application.id}
+                      disabled={updatingId !== null}
                       onClick={() => handleDecision(application.id, 'reject')}
                       type="button"
                     >
@@ -128,7 +238,7 @@ function ParentApplicationPage() {
                     </button>
                     <button
                       className="primary-button compact-button"
-                      disabled={updatingId === application.id}
+                      disabled={updatingId !== null}
                       onClick={() => handleDecision(application.id, 'accept')}
                       type="button"
                     >
@@ -141,7 +251,13 @@ function ParentApplicationPage() {
           })}
         </div>
       )}
-    </section>
+      </section>
+
+      <MatchSuccessDialog
+        matchResult={matchResult}
+        onClose={() => setMatchResult(null)}
+      />
+    </>
   )
 }
 

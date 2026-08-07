@@ -20,9 +20,13 @@ function formatDateTime(value) {
   }).format(new Date(value))
 }
 
-function TrialLessonCard({ trialLesson, actions }) {
+function TrialLessonCard({ trialLesson, actions, highlighted = false }) {
   return (
-    <article className="trial-card">
+    <article
+      className={`trial-card ${highlighted ? 'is-highlighted' : ''}`}
+      id={`trial-lesson-${trialLesson.id}`}
+      tabIndex={highlighted ? -1 : undefined}
+    >
       <header>
         <div>
           <span>{trialLesson.demand?.subject}</span>

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getMyApplications } from '../api/application.js'
 import {
   createTrialLesson,
   getTrialLessons,
 } from '../api/trialLesson.js'
 import TrialLessonCard from '../components/TrialLessonCard.jsx'
+import { resolveTrialLessonTarget } from '../utils/trialLessonFocus.js'
 
 const INITIAL_FORM = {
   application_id: '',
@@ -16,6 +17,7 @@ const INITIAL_FORM = {
 }
 
 function StudentTrialLessonPage() {
+  const [searchParams] = useSearchParams()
   const [trialLessons, setTrialLessons] = useState([])
   const [acceptedApplications, setAcceptedApplications] = useState([])
   const [form, setForm] = useState(INITIAL_FORM)
@@ -53,6 +55,22 @@ function StudentTrialLessonPage() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const focusedTrialLessonId = resolveTrialLessonTarget(
+    searchParams.get('trial_lesson_id'),
+    trialLessons,
+  )
+
+  useEffect(() => {
+    if (!focusedTrialLessonId) return undefined
+
+    const frame = window.requestAnimationFrame(() => {
+      const card = document.getElementById(`trial-lesson-${focusedTrialLessonId}`)
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      card?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [focusedTrialLessonId])
 
   function updateField(event) {
     const { name, value } = event.target
@@ -99,7 +117,7 @@ function StudentTrialLessonPage() {
     <section className="trial-workspace">
       <header className="workspace-header">
         <div>
-          <p className="eyebrow">Student · Trial lessons</p>
+          <p className="eyebrow">学生端 · 试课</p>
           <h1>我的试课预约</h1>
           <p>基于已接受的投递向家长发起试课时间建议。</p>
         </div>
@@ -195,7 +213,11 @@ function StudentTrialLessonPage() {
       ) : (
         <div className="trial-grid">
           {trialLessons.map((trialLesson) => (
-            <TrialLessonCard key={trialLesson.id} trialLesson={trialLesson} />
+            <TrialLessonCard
+              highlighted={focusedTrialLessonId === trialLesson.id}
+              key={trialLesson.id}
+              trialLesson={trialLesson}
+            />
           ))}
         </div>
       )}

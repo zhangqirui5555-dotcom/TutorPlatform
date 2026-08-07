@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyApplications } from '../api/application.js'
+import { getOrders } from '../api/order.js'
+import { applicationResourceMap, matchFlowPaths } from '../utils/matchFlow.js'
+import '../styles/matchFlow.css'
 
 const STATUS_LABELS = {
-  ACCEPTED: '已接受',
+  ACCEPTED: '匹配成功',
   PENDING: '待查看',
-  REJECTED: '已拒绝',
+  REJECTED: '未选择',
   VIEWED: '已查看',
 }
 
 function StudentApplicationPage() {
   const [applications, setApplications] = useState([])
+  const [applicationResources, setApplicationResources] = useState({})
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -22,6 +26,21 @@ function StudentApplicationPage() {
         const result = await getMyApplications()
         if (isActive) {
           setApplications(result)
+        }
+
+        if (result.some((application) => application.status === 'ACCEPTED')) {
+          try {
+            const orderResult = await getOrders({ page: 1, page_size: 50 })
+            if (isActive) {
+              setApplicationResources(applicationResourceMap(
+                result,
+                orderResult.orders || [],
+                [],
+              ))
+            }
+          } catch {
+            if (isActive) setApplicationResources(applicationResourceMap(result))
+          }
         }
       } catch (requestError) {
         if (isActive) {
@@ -72,8 +91,11 @@ function StudentApplicationPage() {
         </div>
       ) : (
         <div className="application-list">
-          {applications.map((application) => (
-            <article className="application-card" key={application.id}>
+          {applications.map((application) => {
+            const paths = matchFlowPaths(applicationResources[application.id], 'STUDENT')
+
+            return (
+              <article className="application-card" key={application.id}>
               <div className="application-card-header">
                 <div>
                   <span>{application.demand?.subject}</span>
@@ -91,8 +113,26 @@ function StudentApplicationPage() {
                 <span>需求状态：{application.demand?.status}</span>
               </div>
               <blockquote>{application.cover_message}</blockquote>
-            </article>
-          ))}
+
+              {application.status === 'ACCEPTED' && (
+                <div className="application-outcome application-outcome--matched">
+                  <strong>匹配成功</strong>
+                  <p>家长已选择你，请查看订单并与家长沟通后续安排。</p>
+                  <div className="application-outcome__actions">
+                    <Link className="primary-link-button" to={paths.order}>查看订单</Link>
+                  </div>
+                </div>
+              )}
+
+              {application.status === 'REJECTED' && (
+                <div className="application-outcome application-outcome--not-selected">
+                  <strong>本次未选择</strong>
+                  <p>可以继续看看其他合适的家教需求。</p>
+                </div>
+              )}
+              </article>
+            )
+          })}
         </div>
       )}
     </section>

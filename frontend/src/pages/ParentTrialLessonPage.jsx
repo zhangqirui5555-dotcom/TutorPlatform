@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   cancelTrialLesson,
   completeTrialLesson,
@@ -7,8 +7,10 @@ import {
   getTrialLessons,
 } from '../api/trialLesson.js'
 import TrialLessonCard from '../components/TrialLessonCard.jsx'
+import { resolveTrialLessonTarget } from '../utils/trialLessonFocus.js'
 
 function ParentTrialLessonPage() {
+  const [searchParams] = useSearchParams()
   const [trialLessons, setTrialLessons] = useState([])
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -32,6 +34,22 @@ function ParentTrialLessonPage() {
   useEffect(() => {
     loadTrialLessons()
   }, [loadTrialLessons])
+
+  const focusedTrialLessonId = resolveTrialLessonTarget(
+    searchParams.get('trial_lesson_id'),
+    trialLessons,
+  )
+
+  useEffect(() => {
+    if (!focusedTrialLessonId) return undefined
+
+    const frame = window.requestAnimationFrame(() => {
+      const card = document.getElementById(`trial-lesson-${focusedTrialLessonId}`)
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      card?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [focusedTrialLessonId])
 
   async function updateStatus(trialLessonId, action) {
     setUpdatingId(trialLessonId)
@@ -60,7 +78,7 @@ function ParentTrialLessonPage() {
     <section className="trial-workspace">
       <header className="workspace-header">
         <div>
-          <p className="eyebrow">Parent · Trial lessons</p>
+          <p className="eyebrow">家长端 · 试课</p>
           <h1>试课预约管理</h1>
           <p>确认学生发起的时间，或完成、取消已有试课。</p>
         </div>
@@ -132,6 +150,7 @@ function ParentTrialLessonPage() {
             return (
               <TrialLessonCard
                 actions={actions}
+                highlighted={focusedTrialLessonId === trialLesson.id}
                 key={trialLesson.id}
                 trialLesson={trialLesson}
               />

@@ -23,6 +23,7 @@ import {
   orderErrorMessage,
   trialCompletionGuidance,
 } from '../utils/orderFormat.js'
+import { orderTrialLessonPath } from '../utils/trialLessonCreate.js'
 import '../styles/order.css'
 
 const CANCELLABLE_STATUSES = new Set(['PENDING', 'CONFIRMED', 'IN_PROGRESS'])
@@ -109,7 +110,7 @@ function OrderDetailPage({ role }) {
   )
   const person = order ? participant(order, role) : null
   const conversationId = order?.application?.conversation_id
-  const trialsPath = `/${rolePath}/trial-lessons`
+  const trialsPath = orderTrialLessonPath(rolePath, order)
   const messagesPath = conversationId
     ? `/${rolePath}/messages?conversation_id=${conversationId}`
     : `/${rolePath}/messages`

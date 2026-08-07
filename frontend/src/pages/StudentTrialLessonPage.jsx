@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getMyApplications } from '../api/application.js'
+import { getOrders } from '../api/order.js'
 import {
   createTrialLesson,
   getTrialLessons,
 } from '../api/trialLesson.js'
 import TrialLessonCard from '../components/TrialLessonCard.jsx'
+import {
+  buildTrialLessonRequest,
+  resolveTrialCreationApplicationId,
+  trialCreationContexts,
+  trialLessonErrorMessage,
+} from '../utils/trialLessonCreate.js'
 import { resolveTrialLessonTarget } from '../utils/trialLessonFocus.js'
 
 const INITIAL_FORM = {
@@ -19,38 +26,48 @@ const INITIAL_FORM = {
 function StudentTrialLessonPage() {
   const [searchParams] = useSearchParams()
   const [trialLessons, setTrialLessons] = useState([])
-  const [acceptedApplications, setAcceptedApplications] = useState([])
+  const [creationContexts, setCreationContexts] = useState([])
   const [form, setForm] = useState(INITIAL_FORM)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const requestedApplicationId = searchParams.get('application_id')
+  const requestedOrderId = searchParams.get('order_id')
 
   const loadData = useCallback(async () => {
     setError('')
 
     try {
-      const [trialResult, applicationResult] = await Promise.all([
+      const [trialResult, applicationResult, orderResult] = await Promise.all([
         getTrialLessons(),
         getMyApplications(),
+        getOrders({ page: 1, page_size: 50 }),
       ])
       setTrialLessons(trialResult)
-      const accepted = applicationResult.filter(
-        (application) => application.status === 'ACCEPTED',
+      const contexts = trialCreationContexts(
+        applicationResult,
+        orderResult.orders || [],
       )
-      setAcceptedApplications(accepted)
+      setCreationContexts(contexts)
       setForm((current) => ({
         ...current,
-        application_id: current.application_id || String(accepted[0]?.id || ''),
+        application_id: resolveTrialCreationApplicationId(contexts, {
+          applicationId: requestedApplicationId,
+          orderId: requestedOrderId,
+          currentApplicationId: current.application_id,
+        }),
       }))
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.error?.message ||
-          '试课预约加载失败，请稍后重试。',
-      )
+      setError(trialLessonErrorMessage(
+        requestError,
+        '试课预约加载失败，请稍后重试。',
+      ))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [requestedApplicationId, requestedOrderId])
 
   useEffect(() => {
     loadData()
@@ -80,34 +97,31 @@ function StudentTrialLessonPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+    setSuccess('')
 
-    const start = new Date(form.scheduled_start_at)
-    const end = new Date(form.scheduled_end_at)
-
-    if (end <= start) {
-      setError('结束时间必须晚于开始时间。')
+    let request
+    try {
+      request = buildTrialLessonRequest(form, creationContexts)
+    } catch (validationError) {
+      setError(validationError.message)
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      await createTrialLesson(form.application_id, {
-        scheduled_start_at: start.toISOString(),
-        scheduled_end_at: end.toISOString(),
-        method: form.method,
-        location_or_link: form.location_or_link,
-      })
+      await createTrialLesson(request.applicationId, request.payload)
       setForm((current) => ({
         ...INITIAL_FORM,
         application_id: current.application_id,
       }))
+      setSuccess('试课已创建。')
       await loadData()
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.error?.message ||
-          '预约创建失败，请检查时间和投递状态。',
-      )
+      setError(trialLessonErrorMessage(
+        requestError,
+        '预约创建失败，请检查时间和申请状态。',
+      ))
     } finally {
       setIsSubmitting(false)
     }
@@ -131,13 +145,18 @@ function StudentTrialLessonPage() {
           {error}
         </div>
       )}
+      {success && (
+        <div className="notice notice-success" role="status">
+          {success}
+        </div>
+      )}
 
       <section className="trial-create-panel">
         <h2>创建预约</h2>
-        {acceptedApplications.length === 0 ? (
+        {creationContexts.length === 0 ? (
           <p>
-            暂无可预约的已接受投递。请先在<Link to="/student/applications">我的投递</Link>
-            中确认撮合状态。
+            暂无可预约的已接受申请及关联订单。请先在
+            <Link to="/student/applications">我的投递</Link>中确认撮合状态。
           </p>
         ) : (
           <form className="trial-form" onSubmit={handleSubmit}>
@@ -149,9 +168,10 @@ function StudentTrialLessonPage() {
                 required
                 value={form.application_id}
               >
-                {acceptedApplications.map((application) => (
-                  <option key={application.id} value={application.id}>
-                    {application.demand?.title || `投递 #${application.id}`}
+                {creationContexts.map((context) => (
+                  <option key={context.orderId} value={context.applicationId}>
+                    {context.application.demand?.title || `申请 #${context.applicationId}`}
+                    {` · 订单 #${context.orderId}`}
                   </option>
                 ))}
               </select>

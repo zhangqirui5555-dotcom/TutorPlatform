@@ -6,6 +6,7 @@ import {
   openCertificationMaterial,
   rejectCertification,
 } from '../api/certification.js'
+import { tryOpenCertificationMaterial } from '../utils/certificationMaterial.js'
 
 function AdminCertificationPage() {
   const [items, setItems] = useState([])
@@ -28,6 +29,16 @@ function AdminCertificationPage() {
   useEffect(() => {
     loadItems()
   }, [loadItems])
+
+  async function openMaterial(id) {
+    setError('')
+    const message = await tryOpenCertificationMaterial(
+      openCertificationMaterial,
+      id,
+      'admin',
+    )
+    if (message) setError(message)
+  }
 
   async function decide(item, decision) {
     if (decision === 'reject' && !reasons[item.id]?.trim()) {
@@ -87,7 +98,7 @@ function AdminCertificationPage() {
               </header>
               <button
                 className="secondary-button compact-button"
-                onClick={() => openCertificationMaterial(item.id, 'admin')}
+                onClick={() => openMaterial(item.id)}
                 type="button"
               >
                 打开认证材料

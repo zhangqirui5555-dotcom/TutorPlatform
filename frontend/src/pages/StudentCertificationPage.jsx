@@ -5,6 +5,7 @@ import {
   openCertificationMaterial,
   uploadCertification,
 } from '../api/certification.js'
+import { tryOpenCertificationMaterial } from '../utils/certificationMaterial.js'
 
 const STATUS_LABELS = {
   APPROVED: '已通过',
@@ -34,6 +35,16 @@ function StudentCertificationPage() {
   useEffect(() => {
     loadCertifications()
   }, [loadCertifications])
+
+  async function openMaterial(id) {
+    setError('')
+    const message = await tryOpenCertificationMaterial(
+      openCertificationMaterial,
+      id,
+      'student',
+    )
+    if (message) setError(message)
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -120,7 +131,7 @@ function StudentCertificationPage() {
                   </div>
                   <button
                     className="secondary-button compact-button"
-                    onClick={() => openCertificationMaterial(item.id, 'student')}
+                    onClick={() => openMaterial(item.id)}
                     type="button"
                   >
                     查看材料

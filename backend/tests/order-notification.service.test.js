@@ -5,7 +5,9 @@ const PARENT = { id: 10, role: "PARENT" }
 const STUDENT = { id: 20, role: "STUDENT" }
 const ADMIN = { id: 99, role: "ADMIN" }
 
-function createFixture(initialStatus = "PENDING") {
+function createFixture(initialStatus = "PENDING", {
+  completedTrialLessons = 1,
+} = {}) {
   const now = new Date("2026-08-07T00:00:00.000Z")
   const order = {
     id: 100,
@@ -36,6 +38,7 @@ function createFixture(initialStatus = "PENDING") {
   const notifications = []
   let failNextNotification = false
   let failNextOrderUpdate = false
+  let trialLessonCountWhere = null
 
   function orderRecord() {
     return {
@@ -96,7 +99,10 @@ function createFixture(initialStatus = "PENDING") {
       },
     },
     trialLesson: {
-      count: async () => 1,
+      count: async ({ where }) => {
+        trialLessonCountWhere = where
+        return completedTrialLessons
+      },
     },
     notification: {
       upsert: async ({ where, create }) => {
@@ -159,6 +165,9 @@ function createFixture(initialStatus = "PENDING") {
       },
       failNextOrderUpdate() {
         failNextOrderUpdate = true
+      },
+      getTrialLessonCountWhere() {
+        return trialLessonCountWhere
       },
     },
   }
@@ -276,6 +285,13 @@ test("Order state changes create transactional participant notifications", async
 
     assert.equal(activeFixture.state.order.status, "COMPLETED")
     assert.equal(activeFixture.state.demand.status, "COMPLETED")
+    assert.equal(
+      activeFixture.state.getTrialLessonCountWhere().status,
+      "COMPLETED",
+    )
+    assert.ok(
+      activeFixture.state.getTrialLessonCountWhere().scheduledEndAt.lte instanceof Date,
+    )
     assert.equal(activeFixture.state.notifications.length, 1)
     assertNotification(activeFixture.state.notifications[0], {
       type: "ORDER_COMPLETED",
@@ -283,6 +299,20 @@ test("Order state changes create transactional participant notifications", async
       actorId: PARENT.id,
       actionPath: "/student/orders",
     })
+  })
+
+  await t.test("order completion requires an ended completed trial lesson", async () => {
+    activeFixture = createFixture("IN_PROGRESS", { completedTrialLessons: 0 })
+
+    await assertRejectCode(
+      () => orderService.completeOrder(PARENT, 100),
+      "COMPLETED_TRIAL_LESSON_REQUIRED",
+    )
+
+    assert.equal(activeFixture.state.order.status, "IN_PROGRESS")
+    assert.equal(activeFixture.state.order.completedAt, null)
+    assert.equal(activeFixture.state.demand.status, "MATCHED")
+    assert.equal(activeFixture.state.notifications.length, 0)
   })
 
   await t.test("administrator completion notifies both participants with unique keys", async () => {

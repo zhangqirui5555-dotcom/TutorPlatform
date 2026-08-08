@@ -8,6 +8,8 @@ function createFixture({
   trialStatus = null,
   proposedBy = STUDENT_ID,
   orderId = 60,
+  scheduledStartAt = new Date("2026-08-06T01:00:00.000Z"),
+  scheduledEndAt = new Date("2026-08-06T02:00:00.000Z"),
 } = {}) {
   const now = new Date("2026-08-07T00:00:00.000Z")
   const application = {
@@ -30,8 +32,8 @@ function createFixture({
         parentId: PARENT_ID,
         studentId: STUDENT_ID,
         proposedBy,
-        scheduledStartAt: new Date("2026-08-08T01:00:00.000Z"),
-        scheduledEndAt: new Date("2026-08-08T02:00:00.000Z"),
+        scheduledStartAt,
+        scheduledEndAt,
         method: "ONLINE",
         locationOrLink: "https://example.test/trial",
         status: trialStatus,
@@ -396,6 +398,77 @@ test("TrialLesson writes create transactional participant notifications", async 
       actorId: STUDENT_ID,
     })
     assert.equal(activeFixture.state.notifications[0].payload.order_id, 60)
+  })
+
+  await t.test("completion uses the server clock and rejects a lesson before its end", async (t) => {
+    t.mock.timers.enable({
+      apis: ["Date"],
+      now: new Date("2026-08-08T01:59:59.999Z"),
+    })
+    activeFixture = createFixture({
+      trialStatus: "CONFIRMED",
+      scheduledEndAt: new Date("2026-08-08T02:00:00.000Z"),
+    })
+
+    await assert.rejects(
+      () => trialLessonService.completeTrialLesson(STUDENT_ID, 50),
+      (error) => {
+        assert.equal(error.statusCode, 409)
+        assert.equal(error.code, "TRIAL_LESSON_NOT_ENDED")
+        assert.equal(error.message, "试课尚未结束，暂不能标记为完成。")
+        return true
+      },
+    )
+
+    assert.equal(activeFixture.state.trialLessons[0].status, "CONFIRMED")
+    assert.equal(activeFixture.state.trialLessons[0].completedAt, null)
+    assert.equal(activeFixture.state.notifications.length, 0)
+  })
+
+  for (const scenario of [
+    {
+      name: "completion is allowed exactly at the scheduled end",
+      now: "2026-08-08T02:00:00.000Z",
+    },
+    {
+      name: "completion is allowed after the scheduled end",
+      now: "2026-08-08T02:00:00.001Z",
+    },
+  ]) {
+    await t.test(scenario.name, async (t) => {
+      t.mock.timers.enable({ apis: ["Date"], now: new Date(scenario.now) })
+      activeFixture = createFixture({
+        trialStatus: "CONFIRMED",
+        scheduledEndAt: new Date("2026-08-08T02:00:00.000Z"),
+      })
+
+      await trialLessonService.completeTrialLesson(PARENT_ID, 50)
+
+      assert.equal(activeFixture.state.trialLessons[0].status, "COMPLETED")
+      assert.equal(
+        activeFixture.state.trialLessons[0].completedAt.toISOString(),
+        scenario.now,
+      )
+      assert.equal(activeFixture.state.notifications.length, 1)
+    })
+  }
+
+  await t.test("an elapsed lesson still requires CONFIRMED status", async (t) => {
+    t.mock.timers.enable({
+      apis: ["Date"],
+      now: new Date("2026-08-08T03:00:00.000Z"),
+    })
+    activeFixture = createFixture({
+      trialStatus: "PENDING_CONFIRMATION",
+      scheduledEndAt: new Date("2026-08-08T02:00:00.000Z"),
+    })
+
+    await assertRejectCode(
+      () => trialLessonService.completeTrialLesson(PARENT_ID, 50),
+      "INVALID_TRIAL_LESSON_STATUS",
+    )
+    assert.equal(activeFixture.state.trialLessons[0].status, "PENDING_CONFIRMATION")
+    assert.equal(activeFixture.state.notifications.length, 0)
   })
 
   await t.test("repeated and concurrent failures create no duplicate notifications", async () => {

@@ -370,8 +370,13 @@ async function completeOrder(user, orderIdInput) {
     assertActionRole(order, user, "PARENT")
     assertStatus(order, ["IN_PROGRESS"], "COMPLETED")
 
+    const completionCutoff = new Date()
     const completedTrialLessons = await transaction.trialLesson.count({
-      where: { orderId: order.id, status: "COMPLETED" },
+      where: {
+        orderId: order.id,
+        status: "COMPLETED",
+        scheduledEndAt: { lte: completionCutoff },
+      },
     })
     if (completedTrialLessons === 0) {
       throw new AppError(

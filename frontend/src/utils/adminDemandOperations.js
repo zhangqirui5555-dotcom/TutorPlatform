@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './apiError.js'
+
 export const ADMIN_DEMAND_STATUS_LABELS = {
   DRAFT: '草稿',
   RECRUITING: '招募中',
@@ -49,7 +51,6 @@ export function isAdminDemandOperationAllowed(demand, action) {
 }
 
 export function adminDemandErrorMessage(error) {
-  const status = error?.response?.status
   const backendError = error?.response?.data?.error
   const backend = backendError?.message || error?.response?.data?.message
 
@@ -59,10 +60,11 @@ export function adminDemandErrorMessage(error) {
   ) {
     return '当前需求已不处于招募状态，无法执行上架。'
   }
-  if (status === 404) return backend || '需求不存在或已被删除。'
-  if (status === 409) return backend || '当前需求状态不允许执行该操作。'
-  if (status === 403) return '你没有需求运营权限。'
-  return backend || error?.message || '请求失败，请稍后重试。'
+  return apiErrorMessage(error, '请求失败，请稍后重试。', {
+    DEMAND_NOT_FOUND: '需求不存在或已被删除。',
+    DEMAND_NOT_LISTABLE: '当前需求已不处于招募状态，无法执行上架。',
+    FORBIDDEN: '你没有需求运营权限。',
+  })
 }
 
 export function adminDemandStatusLabel(status) {

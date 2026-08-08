@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { clearAuth, getToken } from '../utils/auth.js'
+import { normalizeApiError } from '../utils/apiError.js'
 
 const client = axios.create({
   baseURL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1').replace(/\/+$/, ''),
@@ -22,6 +23,7 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
+    normalizeApiError(error)
     const hadSession = Boolean(getToken())
 
     if (error.response?.status === 401 && hadSession) {

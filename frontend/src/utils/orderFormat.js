@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './apiError.js'
+
 export const ORDER_STATUS = {
   PENDING: {
     label: '待确认金额',
@@ -167,6 +169,5 @@ const ERROR_MESSAGES = {
 }
 
 export function orderErrorMessage(error, fallback = '订单操作失败，请稍后重试。') {
-  const apiError = error?.response?.data?.error
-  return ERROR_MESSAGES[apiError?.code] || apiError?.message || fallback
+  return apiErrorMessage(error, fallback, ERROR_MESSAGES)
 }

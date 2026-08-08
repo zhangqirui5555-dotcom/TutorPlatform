@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './apiError.js'
+
 function positiveId(value) {
   const id = Number(value)
   return Number.isInteger(id) && id > 0 ? id : null
@@ -92,7 +94,7 @@ export function trialLessonErrorMessage(
   error,
   fallback = '试课创建失败，请稍后重试。',
 ) {
-  return error?.response?.data?.error?.message || error?.message || fallback
+  return apiErrorMessage(error, fallback)
 }
 
 export function orderTrialLessonPath(rolePath, order) {

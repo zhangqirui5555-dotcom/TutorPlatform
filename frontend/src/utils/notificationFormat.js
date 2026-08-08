@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './apiError.js'
+
 const CATEGORY_LABELS = {
   APPLICATION: '申请通知',
   ORDER: '订单通知',
@@ -276,10 +278,5 @@ const ERROR_MESSAGES = {
 }
 
 export function notificationErrorMessage(error, fallback = '通知操作失败，请稍后重试。') {
-  const apiError = error?.response?.data?.error
-  if (ERROR_MESSAGES[apiError?.code]) return ERROR_MESSAGES[apiError.code]
-  if (error?.response?.status === 403) return '你无权访问该通知。'
-  if (error?.response?.status === 404) return '该通知已不存在或无法访问。'
-  if (error?.response?.status >= 500) return '通知服务暂时不可用，请稍后重试。'
-  return apiError?.message || fallback
+  return apiErrorMessage(error, fallback, ERROR_MESSAGES)
 }

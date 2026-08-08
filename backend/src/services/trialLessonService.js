@@ -1,6 +1,7 @@
 const prisma = require("../prisma/client")
 const notificationService = require("./notificationService")
 const AppError = require("../utils/AppError")
+const { hasTrialLessonEnded } = require("../utils/trialLessonTime")
 const toTrialLessonResponse = require("../utils/trialLessonResponse")
 
 const TRIAL_LESSON_NOTIFICATION_COPY = {
@@ -384,6 +385,8 @@ async function cancelTrialLesson(userId, trialLessonIdInput, input) {
 }
 
 async function completeTrialLesson(userId, trialLessonIdInput) {
+  const completedAt = new Date()
+
   return updateStatus({
     userId,
     trialLessonIdInput,
@@ -391,7 +394,16 @@ async function completeTrialLesson(userId, trialLessonIdInput) {
     nextStatus: "COMPLETED",
     notificationType: "TRIAL_LESSON_COMPLETED",
     extraData: {
-      completedAt: new Date(),
+      completedAt,
+    },
+    beforeUpdate: (trialLesson) => {
+      if (!hasTrialLessonEnded(trialLesson.scheduledEndAt, completedAt)) {
+        throw new AppError(
+          409,
+          "TRIAL_LESSON_NOT_ENDED",
+          "试课尚未结束，暂不能标记为完成。",
+        )
+      }
     },
   })
 }

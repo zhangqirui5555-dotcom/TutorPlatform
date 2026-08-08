@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import client from '../api/client.js'
+import { apiErrorMessage } from '../utils/apiError.js'
 import { getDashboardPath, saveAuth } from '../utils/auth.js'
 
 function LoginPage() {
@@ -37,10 +38,7 @@ function LoginPage() {
         replace: true,
       })
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.error?.message ||
-          '登录失败，请检查邮箱、密码和后端服务。',
-      )
+      setError(apiErrorMessage(requestError, '登录失败，请稍后重试。'))
     } finally {
       setIsSubmitting(false)
     }

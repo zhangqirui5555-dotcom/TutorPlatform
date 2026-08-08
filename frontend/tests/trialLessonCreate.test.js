@@ -83,7 +83,7 @@ test('invalid context and invalid times are stopped before the API request', () 
   }, contexts), /结束时间必须晚于开始时间/)
 })
 
-test('backend business message is shown without replacing it with a generic error', () => {
+test('backend business code is mapped without exposing its English message', () => {
   const error = {
     response: {
       data: { error: { code: 'APPLICATION_NOT_ACCEPTED', message: 'Trial lessons require an ACCEPTED application' } },
@@ -91,7 +91,7 @@ test('backend business message is shown without replacing it with a generic erro
   }
   assert.equal(
     trialLessonErrorMessage(error),
-    'Trial lessons require an ACCEPTED application',
+    '当前申请尚未通过，无法安排试课。',
   )
 })
 

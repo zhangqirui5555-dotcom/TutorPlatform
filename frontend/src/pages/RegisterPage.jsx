@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import client from '../api/client.js'
+import { apiErrorMessage } from '../utils/apiError.js'
 
 function RegisterPage() {
   const navigate = useNavigate()
@@ -30,10 +31,7 @@ function RegisterPage() {
         state: { registered: true },
       })
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.error?.message ||
-          '注册失败，请检查填写内容和后端服务。',
-      )
+      setError(apiErrorMessage(requestError, '注册失败，请稍后重试。'))
     } finally {
       setIsSubmitting(false)
     }

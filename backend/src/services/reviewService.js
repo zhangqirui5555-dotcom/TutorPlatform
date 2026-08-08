@@ -1,6 +1,7 @@
 const prisma = require("../prisma/client")
 const AppError = require("../utils/AppError")
 const toReviewResponse = require("../utils/reviewResponse")
+const { hasTrialLessonEnded } = require("../utils/trialLessonTime")
 
 const REVIEW_INCLUDE = {
   reviewer: {
@@ -99,6 +100,14 @@ async function submitReview(reviewerId, trialLessonIdInput, input) {
       409,
       "TRIAL_LESSON_NOT_COMPLETED",
       "Reviews require a COMPLETED trial lesson",
+    )
+  }
+
+  if (!hasTrialLessonEnded(trialLesson.scheduledEndAt, new Date())) {
+    throw new AppError(
+      409,
+      "TRIAL_LESSON_NOT_ENDED",
+      "试课尚未结束，暂不能提交评价。",
     )
   }
 

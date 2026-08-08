@@ -1,9 +1,8 @@
 import client from './client.js'
+import { apiErrorMessage } from '../utils/apiError.js'
 
 function publicDemandError(error, fallbackMessage) {
-  const apiError = new Error(
-    error.response?.data?.error?.message || fallbackMessage,
-  )
+  const apiError = new Error(apiErrorMessage(error, fallbackMessage))
   apiError.code = error.response?.data?.error?.code
   apiError.status = error.response?.status
   return apiError

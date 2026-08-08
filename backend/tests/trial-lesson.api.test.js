@@ -139,7 +139,7 @@ test("trial lesson creation, confirmation, completion, cancellation, and access 
     {
       method: "POST",
       token: student.token,
-      body: JSON.stringify(schedule(24)),
+      body: JSON.stringify(schedule(-2)),
     },
   )
   assert.equal(created.status, 201)
@@ -198,6 +198,33 @@ test("trial lesson creation, confirmation, completion, cancellation, and access 
   )
   assert.equal(toCancel.status, 201)
   const cancelledTrialId = toCancel.body.trial_lesson.id
+
+  const futureConfirmed = await request(
+    `/api/v1/trial-lessons/${cancelledTrialId}/confirm`,
+    {
+      method: "POST",
+      token: parent.token,
+    },
+  )
+  assert.equal(futureConfirmed.status, 200)
+  assert.equal(futureConfirmed.body.trial_lesson.status, "CONFIRMED")
+
+  const earlyCompletion = await request(
+    `/api/v1/trial-lessons/${cancelledTrialId}/complete`,
+    {
+      method: "POST",
+      token: student.token,
+    },
+  )
+  assert.equal(earlyCompletion.status, 409)
+  assert.equal(earlyCompletion.body.error.code, "TRIAL_LESSON_NOT_ENDED")
+
+  const afterEarlyCompletion = await request(
+    `/api/v1/trial-lessons/${cancelledTrialId}`,
+    { token: student.token },
+  )
+  assert.equal(afterEarlyCompletion.status, 200)
+  assert.equal(afterEarlyCompletion.body.trial_lesson.status, "CONFIRMED")
 
   const cancelled = await request(
     `/api/v1/trial-lessons/${cancelledTrialId}/cancel`,

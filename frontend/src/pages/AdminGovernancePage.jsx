@@ -8,6 +8,7 @@ import {
 import EmptyState from '../components/EmptyState.jsx'
 import ErrorAlert from '../components/ErrorAlert.jsx'
 import LoadingState from '../components/LoadingState.jsx'
+import '../styles/adminMobile.css'
 
 const STATUS_LABELS = {
   DRAFT: '草稿',
@@ -15,6 +16,85 @@ const STATUS_LABELS = {
   MATCHED: '已匹配',
   COMPLETED: '已完成',
   CLOSED: '已关闭',
+}
+
+function formatTime(value) {
+  return value ? new Date(value).toLocaleString('zh-CN') : '暂无记录'
+}
+
+function GovernanceAction({ demand, updatingId, onClose, onReopen }) {
+  if (['DRAFT', 'RECRUITING'].includes(demand.status)) {
+    return (
+      <button
+        className="secondary-button compact-button danger-button"
+        disabled={updatingId === demand.id}
+        onClick={() => onClose(demand)}
+        type="button"
+      >
+        {updatingId === demand.id ? '处理中…' : '关闭需求'}
+      </button>
+    )
+  }
+
+  if (demand.status === 'CLOSED') {
+    return (
+      <button
+        className="secondary-button compact-button"
+        disabled={updatingId === demand.id}
+        onClick={() => onReopen(demand)}
+        type="button"
+      >
+        {updatingId === demand.id ? '处理中…' : '恢复需求'}
+      </button>
+    )
+  }
+
+  return <span className="muted-text">无需处理</span>
+}
+
+function GovernanceDemandCard({ demand, updatingId, onClose, onReopen }) {
+  const timeLabel = demand.published_at ? '发布时间' : '创建时间'
+
+  return (
+    <article className="admin-operation-card governance-demand-card">
+      <header className="admin-operation-card__header">
+        <div>
+          <p className="admin-operation-card__eyebrow">治理目标</p>
+          <h2>{demand.title}</h2>
+          <p>{demand.subject} · {demand.region}</p>
+        </div>
+        <span className={`status-tag status-${demand.status.toLowerCase()}`}>
+          {STATUS_LABELS[demand.status] || demand.status}
+        </span>
+      </header>
+      <dl className="admin-operation-card__details">
+        <div className="admin-operation-card__field">
+          <dt>发布者</dt>
+          <dd>{demand.parent.display_name}<small>{demand.parent.email || '未填写邮箱'}</small></dd>
+        </div>
+        <div className="admin-operation-card__field">
+          <dt>{timeLabel}</dt>
+          <dd>{formatTime(demand.published_at || demand.created_at)}</dd>
+        </div>
+        <div className="admin-operation-card__field">
+          <dt>投递数量</dt>
+          <dd>{demand.application_count}</dd>
+        </div>
+        <div className="admin-operation-card__field">
+          <dt>操作原因</dt>
+          <dd>暂无记录</dd>
+        </div>
+      </dl>
+      <footer className="admin-operation-card__actions">
+        <GovernanceAction
+          demand={demand}
+          onClose={onClose}
+          onReopen={onReopen}
+          updatingId={updatingId}
+        />
+      </footer>
+    </article>
+  )
 }
 
 function AdminGovernancePage() {
@@ -75,7 +155,7 @@ function AdminGovernancePage() {
   const metrics = overview?.metrics
 
   return (
-    <section className="admin-workspace">
+    <section className="admin-workspace admin-operations-page admin-governance-page">
       <header className="workspace-header">
         <div>
           <p className="eyebrow">Admin · Governance</p>
@@ -112,43 +192,43 @@ function AdminGovernancePage() {
             {overview.demands.length === 0 ? (
               <EmptyState title="暂无家教需求" description="家长发布需求后会显示在这里。" />
             ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead><tr><th>需求</th><th>发布者</th><th>地区</th><th>投递</th><th>状态</th><th>治理操作</th></tr></thead>
-                  <tbody>
-                    {overview.demands.map((demand) => (
-                      <tr key={demand.id}>
-                        <td><strong>{demand.title}</strong><small>{demand.subject}</small></td>
-                        <td><strong>{demand.parent.display_name}</strong><small>{demand.parent.email}</small></td>
-                        <td>{demand.region}</td>
-                        <td>{demand.application_count}</td>
-                        <td><span className={`status-tag status-${demand.status.toLowerCase()}`}>{STATUS_LABELS[demand.status] || demand.status}</span></td>
-                        <td>
-                          {['DRAFT', 'RECRUITING'].includes(demand.status) ? (
-                            <button
-                              className="secondary-button compact-button danger-button"
-                              disabled={updatingId === demand.id}
-                              onClick={() => closeDemand(demand)}
-                              type="button"
-                            >
-                              {updatingId === demand.id ? '处理中…' : '关闭需求'}
-                            </button>
-                          ) : demand.status === 'CLOSED' ? (
-                            <button
-                              className="secondary-button compact-button"
-                              disabled={updatingId === demand.id}
-                              onClick={() => reopenDemand(demand)}
-                              type="button"
-                            >
-                              {updatingId === demand.id ? '处理中…' : '恢复需求'}
-                            </button>
-                          ) : <span className="muted-text">无需处理</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div className="admin-table-wrap admin-desktop-table">
+                  <table className="admin-table">
+                    <thead><tr><th>需求</th><th>发布者</th><th>地区</th><th>投递</th><th>状态</th><th>治理操作</th></tr></thead>
+                    <tbody>
+                      {overview.demands.map((demand) => (
+                        <tr key={demand.id}>
+                          <td><strong>{demand.title}</strong><small>{demand.subject}</small></td>
+                          <td><strong>{demand.parent.display_name}</strong><small>{demand.parent.email}</small></td>
+                          <td>{demand.region}</td>
+                          <td>{demand.application_count}</td>
+                          <td><span className={`status-tag status-${demand.status.toLowerCase()}`}>{STATUS_LABELS[demand.status] || demand.status}</span></td>
+                          <td>
+                            <GovernanceAction
+                              demand={demand}
+                              onClose={closeDemand}
+                              onReopen={reopenDemand}
+                              updatingId={updatingId}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="admin-mobile-list">
+                  {overview.demands.map((demand) => (
+                    <GovernanceDemandCard
+                      demand={demand}
+                      key={demand.id}
+                      onClose={closeDemand}
+                      onReopen={reopenDemand}
+                      updatingId={updatingId}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </section>
         </>

@@ -1,4 +1,5 @@
 import RoleDashboard from '../components/RoleDashboard.jsx'
+import '../styles/adminMobile.css'
 
 const MODULES = [
   {
@@ -35,12 +36,14 @@ const MODULES = [
 
 function AdminDashboardPage() {
   return (
-    <RoleDashboard
-      eyebrow="Admin workspace"
-      modules={MODULES}
-      title="管理员控制台"
-      welcome="审核学生身份，维护平台账号与业务流程的可信运行。"
-    />
+    <div className="admin-dashboard-page">
+      <RoleDashboard
+        eyebrow="Admin workspace"
+        modules={MODULES}
+        title="管理员控制台"
+        welcome="审核学生身份，维护平台账号与业务流程的可信运行。"
+      />
+    </div>
   )
 }
 

@@ -7,6 +7,7 @@ import {
   rejectCertification,
 } from '../api/certification.js'
 import { tryOpenCertificationMaterial } from '../utils/certificationMaterial.js'
+import '../styles/adminMobile.css'
 
 function AdminCertificationPage() {
   const [items, setItems] = useState([])
@@ -63,7 +64,7 @@ function AdminCertificationPage() {
   }
 
   return (
-    <section className="application-workspace">
+    <section className="application-workspace admin-certification-page">
       <header className="workspace-header">
         <div>
           <p className="eyebrow">Admin · Certification</p>

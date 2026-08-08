@@ -1,0 +1,189 @@
+.admin-mobile-list {
+  display: none;
+}
+
+.admin-operation-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 10px 24px rgba(23, 61, 56, 0.05);
+}
+
+.admin-operation-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-operation-card__header > div,
+.admin-operation-card__details,
+.admin-operation-card__field dd {
+  min-width: 0;
+}
+
+.admin-operation-card__header h2,
+.admin-operation-card__header p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-operation-card__header h2 {
+  color: var(--heading);
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.admin-operation-card__header p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.admin-operation-card__header .admin-operation-card__eyebrow {
+  margin: 0 0 5px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-operation-card__details {
+  margin: 15px 0 0;
+}
+
+.admin-operation-card__field {
+  display: grid;
+  grid-template-columns: minmax(88px, 32%) minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #edf1ef;
+}
+
+.admin-operation-card__field dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-operation-card__field dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--heading);
+  font-size: 0.88rem;
+}
+
+.admin-operation-card__field dd small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.admin-operation-card__actions {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .admin-operations-page,
+  .admin-dashboard-page,
+  .admin-certification-page {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .admin-operations-page .admin-desktop-table {
+    display: none;
+  }
+
+  .admin-operations-page .admin-mobile-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+  }
+
+  .admin-operations-page .admin-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-governance-page .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-operations-page .secondary-link-button,
+  .admin-operations-page .compact-button,
+  .admin-operations-page .primary-button,
+  .admin-certification-page .compact-button,
+  .admin-dashboard-page .module-link {
+    min-height: 44px;
+  }
+
+  .admin-dashboard-page .module-link {
+    align-items: center;
+    display: inline-flex;
+  }
+
+  .admin-operation-card__actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .admin-governance-page .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-governance-page .section-heading > button {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-operations-page .admin-filter-bar,
+  .admin-governance-page .metric-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-operations-page .admin-filter-bar button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .admin-operations-page .admin-filter-bar input,
+  .admin-operations-page .admin-filter-bar select {
+    box-sizing: border-box;
+    min-height: 44px;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .admin-governance-page .governance-section,
+  .admin-operation-card {
+    padding: 15px;
+  }
+
+  .admin-operation-card__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-operation-card__header .status-tag {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  .admin-operation-card {
+    padding: 13px;
+  }
+
+  .admin-operation-card__field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}
